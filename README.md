@@ -38,6 +38,7 @@ API연동
 - **API Test Tool**: Postman
 
 ## ERD
+<img width="1103" height="709" alt="image" src="https://github.com/user-attachments/assets/ace3aa5f-ff84-4236-9fc8-00fda6f9d7a4" />
 
 
 
