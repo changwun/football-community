@@ -20,7 +20,7 @@ public class MemberController {
   @PostMapping("/signup")
   public ResponseEntity<String> signup(@Valid @RequestBody MemberSignupRequestDto requestDto){
     memberService.signup(requestDto);
-    return ResponseEntity.ok("회원가입 완료");//회원가입 완료메시지 출력
+    return ResponseEntity.ok("회원가입 완료");// 재 풀 리퀘스트 위한 주석 추가.
   }
 
 }
