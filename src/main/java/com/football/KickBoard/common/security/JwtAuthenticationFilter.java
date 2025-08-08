@@ -23,20 +23,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       HttpServletRequest request,
       HttpServletResponse response,
       FilterChain filterChain
-  ) throws ServletException, IOException{
+  ) throws ServletException, IOException {
 
-      String token = jwtTokenProvider.resolveToken(request);
+    String token = jwtTokenProvider.resolveToken(request);
 
     //토큰이 존재하고 유효하면 토큰에서 userId 추출
-    if(token !=  null && jwtTokenProvider.validateToken(token)){
+    if (token != null && jwtTokenProvider.validateToken(token)) {
       String userId = jwtTokenProvider.getUserIdFromToken(token);
 
       JwtAuthenticationToken authentication =
           new JwtAuthenticationToken(userId, null, null);
-    //JwtAuthenticationToken의 authorities 부분은 권한 정보를 의미
+      //JwtAuthenticationToken의 authorities 부분은 권한 정보를 의미
       SecurityContextHolder.getContext().setAuthentication(authentication);
     }
-  filterChain.doFilter(request,response);
+    filterChain.doFilter(request, response);
   }
 
 }

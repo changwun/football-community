@@ -5,6 +5,7 @@ import lombok.Getter;
 
 @Getter
 public class MemberLoginRequestDto {
+
   @NotBlank
   private String userId;
   @NotBlank

@@ -9,17 +9,19 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
   private final Object principal;
   private Object credentials;
 
-  public JwtAuthenticationToken(Object principal,Object credentials){
+  public JwtAuthenticationToken(Object principal, Object credentials) {
     super(null);
     this.principal = principal;
     this.credentials = credentials;
     setAuthenticated(false);
   }
-  public JwtAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities){
-  super(authorities);
-  this.principal = principal;
-  this.credentials = credentials;
-  setAuthenticated(true);
+
+  public JwtAuthenticationToken(Object principal, Object credentials,
+      Collection<? extends GrantedAuthority> authorities) {
+    super(authorities);
+    this.principal = principal;
+    this.credentials = credentials;
+    setAuthenticated(true);
   }
 
   @Override
