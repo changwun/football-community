@@ -15,18 +15,19 @@ public class GlobalExceptionHandler {
 
   //유효성 검증 실패 시 예외 처리
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String ,String >> handleValidationExceptions(
-      MethodArgumentNotValidException ex){
+  public ResponseEntity<Map<String, String>> handleValidationExceptions(
+      MethodArgumentNotValidException ex) {
     Map<String, String> errors = new HashMap<>();
     BindingResult bindingResult = ex.getBindingResult();
 
-    bindingResult.getAllErrors().forEach(error ->{
+    bindingResult.getAllErrors().forEach(error -> {
       String filedName = ((FieldError) error).getField();
       String errorMessage = error.getDefaultMessage();
-      errors.put(filedName,errorMessage);
+      errors.put(filedName, errorMessage);
     });
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
   }
+
   // IllegalArgumentException 예외 처리 (이미 사용 중인 아이디 등)
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Map<String, String>> handleIllegalArgumentException(

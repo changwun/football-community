@@ -23,22 +23,19 @@ public class Member {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;//내부 식별자(Pk)
 
-  @Column(name = "userid",nullable = false,unique = true)
+  @Column(name = "userid", nullable = false, unique = true)
   private String userId; //사용자 ID
   @Column(nullable = false)
   private String password;
   @Column(nullable = false)
   private String email;
   @Column(nullable = false)
-  private String  nickname;
+  private String nickname;
 
-  private String  phoneNumber;
+  private String phoneNumber;
   private LocalDate birthDate;
   @Column(nullable = false)
   private String favoriteTeam;
-
-
-
 
 
 }
