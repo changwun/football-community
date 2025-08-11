@@ -2,9 +2,12 @@ package com.football.KickBoard.domain.member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -17,6 +20,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
+@Table(name = "members")
 public class Member {
 
   @Id
@@ -36,6 +40,10 @@ public class Member {
   private LocalDate birthDate;
   @Column(nullable = false)
   private String favoriteTeam;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private Role role;
 
 
 }
