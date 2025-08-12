@@ -76,6 +76,7 @@ public class JwtTokenProvider {
     return claims.getSubject();
   }
 
+  //TODO JWT에 role claim 추가 고려
   public String generateToken(String userId) {
     return Jwts.builder()
         .setSubject(userId)
