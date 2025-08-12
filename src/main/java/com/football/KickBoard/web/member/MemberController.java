@@ -7,17 +7,22 @@ import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
 import com.football.KickBoard.web.member.dto.MemberResponseDto;
 import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
 
+import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -29,6 +34,20 @@ public class MemberController {
 
   private final MemberService memberService;
 
+  @PutMapping("/password")
+  public ResponseEntity<?> changePassword(
+      @RequestBody @Valid PasswordChangeRequestDto requestDto,
+      Authentication authentication) {
+    String userId = authentication.getName();
+    logger.info("비밀번호 변경 요청 접수: userId={}", userId);
+
+    memberService.changePassword(userId, requestDto);
+
+    logger.info("비밀번호 변경 성공: userId={}", userId);
+    return ResponseEntity.ok().body(Map.of("success", true, "message", "비밀번호가 성공적으로 변경되었습니다."));
+  }
+
+
   //관리자용: PK로 회원 조회
   @GetMapping("/{id}")
   public ResponseEntity<MemberResponseDto> getMemberByIdForAdmin(@PathVariable Long id) {
@@ -38,8 +57,8 @@ public class MemberController {
   }
 
   //관리자용: userId로 회원 조회
-  @GetMapping("/username/{userId}")
-  public ResponseEntity<MemberResponseDto> getMemberByUserIdForAdmin(@PathVariable String userId) {
+  @GetMapping
+  public ResponseEntity<MemberResponseDto> getMemberByUserIdForAdmin(@RequestParam String userId) {
     logger.info("관리자 회원 상세 조회 요청: userId{}", userId);
     MemberResponseDto dto = memberService.getMemberInfoByUserIdForAdmin(userId);
     return ResponseEntity.ok(dto);

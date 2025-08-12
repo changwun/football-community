@@ -1,7 +1,12 @@
 package com.football.KickBoard.common.exception;
 
+import com.football.KickBoard.application.member.MemberServiceImpl;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -12,6 +17,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  private static final Logger logger = LoggerFactory.getLogger(MemberServiceImpl.class);
+
 
   //유효성 검증 실패 시 예외 처리
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -37,6 +45,14 @@ public class GlobalExceptionHandler {
     error.put("message", ex.getMessage());
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+  }
+  //권힌 없음 예외 처리(403 Forbidden)
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<Map<String ,String >> handleAccessDeniedException(AccessDeniedException ex){
+    logger.warn("Access Denied: {}", ex.getMessage());
+    Map<String ,String > error = new HashMap<>();
+    error.put("message", "접근 권한이 없습니다.");
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
   }
 
   // 그 외 모든 예외 처리

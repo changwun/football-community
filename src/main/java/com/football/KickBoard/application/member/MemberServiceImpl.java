@@ -8,9 +8,11 @@ import com.football.KickBoard.web.member.dto.MemberLoginRequestDto;
 import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
 import com.football.KickBoard.web.member.dto.MemberResponseDto;
 import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
+import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,35 @@ public class MemberServiceImpl implements MemberService {
   private final JwtTokenProvider jwtTokenProvider;
 
 
+  @Override
+  @Transactional
+  public void changePassword(String userId, PasswordChangeRequestDto requestDto) {
+    logger.info("비밀번호 변경 시도: userId{}", userId);
+    //회원 조회
+    Member member = memberRepository.findByUserId(userId)
+        .orElseThrow(() -> {
+          logger.warn("비밀번호 변경 실패 - 존재하지 않는 아이디: {}", userId);
+          return new IllegalArgumentException("회원 정보를 찾을 수 없습니다.");
+        });
+    //현재 비밀번호 확인
+    if (!passwordEncoder.matches(requestDto.getCurrentPasswprd(), member.getPassword())) {
+      logger.warn("비밀번호 변경 실패 - 현재 비밀번호 불일치: {}", userId);
+      throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+    }
+    //새 비밀번호 확인 비밀번호 일치 확인
+    if (!requestDto.getNewPassword().equals(requestDto.getConfirmPassword())) {
+      logger.warn("비밀번호 변경 실패 - 새 비밀번호 불일치: {}", userId);
+      throw new IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+    }
+    //비밀번호 변경
+    String encodedPassword = passwordEncoder.encode(requestDto.getNewPassword());
+    member.updatePassword(encodedPassword);
+
+    logger.info("비밀번호 변경 성공: userId{}", userId);
+
+  }
+
+
   //본인 정보 조회(UserId 기준)
   @Override
   @Transactional(readOnly = true)
@@ -41,16 +72,8 @@ public class MemberServiceImpl implements MemberService {
   //관리자용 : PK로 조회(권한 체크 포함)
   @Override
   @Transactional(readOnly = true)
+  @PreAuthorize("hasRole('ADMIN')")
   public MemberResponseDto getMemberInfoByIdForAdmin(Long id) {
-    //현재 로그인한 사용자 확인
-    String currentUserId = getCurrentUserId();
-    Member current = memberRepository.findByUserId(currentUserId)
-        .orElseThrow(() -> new IllegalArgumentException("현재 사용자를 찾을 수 없습니다."));
-    //권한 확인
-    if (!"ADMIN".equals(current.getRole().name())) {
-      logger.warn("권한 없음: userId={} tried to a access admin API", currentUserId);
-      throw new SecurityException("권한이 없습니다.");
-    }
     //대상 회원 조회
     Member target = memberRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("대상 화원을 찾을 수 없습니다."));
@@ -60,15 +83,8 @@ public class MemberServiceImpl implements MemberService {
   //관리자용: userId로 조회
   @Override
   @Transactional(readOnly = true)
+  @PreAuthorize("hasRole('ADMIN')")
   public MemberResponseDto getMemberInfoByUserIdForAdmin(String userId) {
-    String currentUserId = getCurrentUserId();
-    Member current = memberRepository.findByUserId(currentUserId)
-        .orElseThrow(() -> new IllegalArgumentException("현재 사용자를 찾을 수 없습니다."));
-
-    if (!"ADMIN".equals(current.getRole().name())) {
-      logger.warn("권한 없음: userId={} tried to access admin API", currentUserId);
-      throw new SecurityException("권한이 없습니다.");
-    }
 
     Member target = memberRepository.findByUserId(userId)
         .orElseThrow(() -> new IllegalArgumentException("대상 회원을 찾을 수 없습니다."));

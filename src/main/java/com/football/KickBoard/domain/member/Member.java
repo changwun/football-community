@@ -45,5 +45,9 @@ public class Member {
   @Column(nullable = false)
   private Role role;
 
+  public void updatePassword(String newPassword) {
+    this.password = newPassword;
+  }
+
 
 }
