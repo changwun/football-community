@@ -40,7 +40,7 @@ public class MemberServiceImpl implements MemberService {
           return new IllegalArgumentException("회원 정보를 찾을 수 없습니다.");
         });
     //현재 비밀번호 확인
-    if (!passwordEncoder.matches(requestDto.getCurrentPasswprd(), member.getPassword())) {
+    if (!passwordEncoder.matches(requestDto.getCurrentPassword(), member.getPassword())) {
       logger.warn("비밀번호 변경 실패 - 현재 비밀번호 불일치: {}", userId);
       throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
     }

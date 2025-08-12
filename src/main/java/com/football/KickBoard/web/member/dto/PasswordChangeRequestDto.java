@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PasswordChangeRequestDto {
   @NotBlank(message = "현재 비밀번호는 필수입니다.")
-  private String currentPasswprd;
+  private String currentPassword;
 
   @NotBlank(message = "새 비밀번호는 필수입니다.")
   @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
