@@ -8,6 +8,7 @@ import com.football.KickBoard.web.member.dto.MemberLoginRequestDto;
 import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
 import com.football.KickBoard.web.member.dto.MemberResponseDto;
 import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
+import com.football.KickBoard.web.member.dto.MemberWithdrawRequestDto;
 import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -28,6 +29,25 @@ public class MemberServiceImpl implements MemberService {
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
 
+  //회원 탈퇴 서비스 구현
+  @Override
+  @Transactional
+  public void withrawMember(String userId, MemberWithdrawRequestDto requestDto) {
+    logger.info("회원 탈퇴 시도: userId={}", userId);
+    //회원 조회
+    Member member = memberRepository.findByUserId(userId)
+        .orElseThrow(() -> {
+          logger.warn("회원 탈퇴 실패 - 존재하지 않는 아이디: {}", userId);
+          return new IllegalArgumentException("회원 정보를 찾을 수 없습니다.");
+        });
+    if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
+      logger.warn("회원 탈퇴 실패 - 비밀번호 불일치: userId={}", userId);
+      throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+    }
+
+    member.deactivate();
+    logger.info("회원 탈퇴 처리 성공: userId={}", userId);
+  }
 
   @Override
   @Transactional
@@ -124,8 +144,13 @@ public class MemberServiceImpl implements MemberService {
           logger.warn("로그인 실패 - 존재하지 않는 아이디: {}", requestDto.getUserId());
           return new IllegalArgumentException("존재하지 않는 아이디 입니다.");
         });
+    //회원이 비활성 상태인지 확인
+    if (!member.isActive()) {
+      logger.warn("로그인 실패 - 비활성/탈퇴된 계정: {}", requestDto.getUserId());
+      throw new IllegalArgumentException("탈퇴되었거나 비활성 상태인 계정입니다.");
+    }
 
-//비밀번호는 위와 같이 findByuserId처럼 DB에서 직접찾는형식 x개인정보
+    //비밀번호는 위와 같이 findByuserId처럼 DB에서 직접찾는형식 x개인정보
     if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
       logger.warn("로그인 실패 - 비밀번호 불일치: {}", requestDto.getUserId());
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");

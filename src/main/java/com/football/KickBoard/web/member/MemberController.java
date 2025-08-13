@@ -7,6 +7,7 @@ import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
 import com.football.KickBoard.web.member.dto.MemberResponseDto;
 import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
 
+import com.football.KickBoard.web.member.dto.MemberWithdrawRequestDto;
 import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +35,20 @@ public class MemberController {
   private static final Logger logger = LoggerFactory.getLogger(MemberController.class);
 
   private final MemberService memberService;
+
+  @DeleteMapping("/withraw")
+  public ResponseEntity<?> withrawMember(
+      @RequestBody @Valid MemberWithdrawRequestDto requestDto,
+      Authentication authentication) {
+    String userId = authentication.getName();
+    logger.info("회원 탈퇴 요청 접수: userId={}, confirmText='{}'", userId, requestDto.getConfirmText());
+
+    memberService.withrawMember(userId, requestDto);
+
+    logger.info("회원 탈퇴 처리 완료: userId={}", userId);
+    return ResponseEntity.ok().body(Map.of("seccess", true, "message", "회원 탈퇴가 성공적으로 처리되었습니다."));
+  }
+
 
   @PutMapping("/password")
   public ResponseEntity<?> changePassword(

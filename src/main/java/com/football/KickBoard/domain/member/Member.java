@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,6 +45,16 @@ public class Member {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Role role;
+
+  @Column(nullable = false)
+  private boolean active = true;//기본값 트루(활성)
+
+  private LocalDateTime deletedAt;
+
+  public void deactivate() {
+    this.active = false;
+    this.deletedAt = LocalDateTime.now();
+  }
 
   public void updatePassword(String newPassword) {
     this.password = newPassword;
