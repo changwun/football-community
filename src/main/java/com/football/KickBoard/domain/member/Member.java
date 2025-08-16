@@ -47,11 +47,14 @@ public class Member {
   private Role role;
 
   @Column(nullable = false)
-  private boolean active = true;//기본값 트루(활성)
+  private boolean active = true;
 
   private LocalDateTime deletedAt;
 
-  public void deactivate() {
+  private LocalDateTime createdAt;
+  private LocalDateTime lastLoginAt;
+
+  public void deactivate(){
     this.active = false;
     this.deletedAt = LocalDateTime.now();
   }

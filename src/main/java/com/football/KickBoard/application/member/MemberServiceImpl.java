@@ -4,6 +4,8 @@ import com.football.KickBoard.common.security.JwtTokenProvider;
 import com.football.KickBoard.domain.member.Member;
 import com.football.KickBoard.domain.member.MemberRepository;
 import com.football.KickBoard.domain.member.Role;
+import com.football.KickBoard.web.member.dto.MemberListRequestDto;
+import com.football.KickBoard.web.member.dto.MemberListResponseDto;
 import com.football.KickBoard.web.member.dto.MemberLoginRequestDto;
 import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
 import com.football.KickBoard.web.member.dto.MemberResponseDto;
@@ -13,6 +15,10 @@ import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +34,45 @@ public class MemberServiceImpl implements MemberService {
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
+
+  //회원 리스트 검색(관리자 기능)
+  @Override
+  @PreAuthorize("hasRole('ADMIN)")
+  public Page<MemberListResponseDto> getMemberListForAdmin(MemberListRequestDto requestDto){
+    logger.info("관리자 회원 목록 조회 요청: {}",requestDto.toString());
+
+    Pageable pageable = PageRequest.of(
+        requestDto.getPage(),
+        requestDto.getSize(),
+        Sort.Direction.fromString(requestDto.getSortDirection()),
+        requestDto.getSortBy()
+    );
+    Page<Member> memberPage;
+    //null이 아니면 서치키워드 반환, null이면 빈 문자열 처리
+    String searchKeyword = requestDto.getSearchKeyword() != null ?
+        requestDto.getSearchKeyword() : "";
+    //검색 조건에 맞춰서 호출
+    if (requestDto.getActiveStatus() != null){
+      if (!searchKeyword.isEmpty()){
+        memberPage = memberRepository.findByActiveAndUserIdContainingOrActiveAndEmailContainingOrActiveAndNicknameContaining(
+            requestDto.getActiveStatus(), searchKeyword,
+            requestDto.getActiveStatus(), searchKeyword,
+            requestDto.getActiveStatus(), searchKeyword,
+            pageable
+        );
+      }else {
+        memberPage = memberRepository.findByActive(requestDto.getActiveStatus(),
+            pageable);
+      }
+    } else if (!searchKeyword.isEmpty()) {
+      memberPage = memberRepository.findByUserIdContainingOrEmailContainingOrNicknameContaining(
+          searchKeyword,searchKeyword,searchKeyword, pageable
+      );
+    }else {
+      memberPage = memberRepository.findAll(pageable);
+    }
+    return memberPage.map(MemberListResponseDto::new);
+  }
 
   //회원 탈퇴 서비스 구현
   @Override
@@ -187,6 +232,7 @@ public class MemberServiceImpl implements MemberService {
         .nickname(requestDto.getNickname())
         .favoriteTeam(requestDto.getFavoriteTeam())
         .role(Role.USER) //기본값 일반유저
+        .active(true)
         .build();
 
     // 저장
