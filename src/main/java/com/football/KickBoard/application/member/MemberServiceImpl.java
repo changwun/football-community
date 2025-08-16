@@ -32,48 +32,36 @@ public class MemberServiceImpl implements MemberService {
   //회원 탈퇴 서비스 구현
   @Override
   @Transactional
-  public void withrawMember(String userId, MemberWithdrawRequestDto requestDto) {
-    logger.info("회원 탈퇴 시도: userId={}", userId);
+  public void withdrawMember(String userId, MemberWithdrawRequestDto requestDto) {
     //회원 조회
     Member member = memberRepository.findByUserId(userId)
-        .orElseThrow(() -> {
-          logger.warn("회원 탈퇴 실패 - 존재하지 않는 아이디: {}", userId);
-          return new IllegalArgumentException("회원 정보를 찾을 수 없습니다.");
-        });
+        .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
     if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
-      logger.warn("회원 탈퇴 실패 - 비밀번호 불일치: userId={}", userId);
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
 
     member.deactivate();
-    logger.info("회원 탈퇴 처리 성공: userId={}", userId);
   }
 
   @Override
   @Transactional
   public void changePassword(String userId, PasswordChangeRequestDto requestDto) {
-    logger.info("비밀번호 변경 시도: userId{}", userId);
     //회원 조회
     Member member = memberRepository.findByUserId(userId)
-        .orElseThrow(() -> {
-          logger.warn("비밀번호 변경 실패 - 존재하지 않는 아이디: {}", userId);
-          return new IllegalArgumentException("회원 정보를 찾을 수 없습니다.");
-        });
+        .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
     //현재 비밀번호 확인
     if (!passwordEncoder.matches(requestDto.getCurrentPassword(), member.getPassword())) {
-      logger.warn("비밀번호 변경 실패 - 현재 비밀번호 불일치: {}", userId);
       throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
     }
     //새 비밀번호 확인 비밀번호 일치 확인
     if (!requestDto.getNewPassword().equals(requestDto.getConfirmPassword())) {
-      logger.warn("비밀번호 변경 실패 - 새 비밀번호 불일치: {}", userId);
       throw new IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
     }
     //비밀번호 변경
     String encodedPassword = passwordEncoder.encode(requestDto.getNewPassword());
     member.updatePassword(encodedPassword);
-
-    logger.info("비밀번호 변경 성공: userId{}", userId);
 
   }
 
@@ -85,43 +73,31 @@ public class MemberServiceImpl implements MemberService {
     Member member = memberRepository.findByUserId(userId)
         .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
-    return toDto(member);
+    return MemberResponseDto.fromEntity(member);
 
   }
 
   //관리자용 : PK로 조회(권한 체크 포함)
   @Override
   @Transactional(readOnly = true)
-  @PreAuthorize("hasRole('ADMIN')")
   public MemberResponseDto getMemberInfoByIdForAdmin(Long id) {
     //대상 회원 조회
     Member target = memberRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("대상 화원을 찾을 수 없습니다."));
-    return toDto(target);
+    return MemberResponseDto.fromEntity(target);
   }
 
   //관리자용: userId로 조회
   @Override
   @Transactional(readOnly = true)
-  @PreAuthorize("hasRole('ADMIN')")
   public MemberResponseDto getMemberInfoByUserIdForAdmin(String userId) {
 
     Member target = memberRepository.findByUserId(userId)
         .orElseThrow(() -> new IllegalArgumentException("대상 회원을 찾을 수 없습니다."));
-    return toDto(target);
+    return MemberResponseDto.fromEntity(target);
   }
 
-  //중복되어 사용하는 정보 toDto 처리
-  private MemberResponseDto toDto(Member m) {
-    return new MemberResponseDto(
-        m.getId(),
-        m.getUserId(),
-        m.getNickname(),
-        m.getEmail(),
-        m.getFavoriteTeam(),
-        m.getRole() != null ? m.getRole().name() : "USER"
-    );
-  }
+
 
 
   @Override
@@ -130,34 +106,27 @@ public class MemberServiceImpl implements MemberService {
         .getAuthentication()
         .getPrincipal();
 
-    logger.debug("현재 로그인한 사용자 ID: {}", currentUser);
     return currentUser;
   }
 
 
   @Override
   public MemberLoginResponseDto login(MemberLoginRequestDto requestDto) {
-    logger.info("로그인 시도: userId: {}", requestDto.getUserId());
 
     Member member = memberRepository.findByUserId(requestDto.getUserId())
-        .orElseThrow(() -> {
-          logger.warn("로그인 실패 - 존재하지 않는 아이디: {}", requestDto.getUserId());
-          return new IllegalArgumentException("존재하지 않는 아이디 입니다.");
-        });
+        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디 입니다."));
+
     //회원이 비활성 상태인지 확인
     if (!member.isActive()) {
-      logger.warn("로그인 실패 - 비활성/탈퇴된 계정: {}", requestDto.getUserId());
       throw new IllegalArgumentException("탈퇴되었거나 비활성 상태인 계정입니다.");
     }
 
     //비밀번호는 위와 같이 findByuserId처럼 DB에서 직접찾는형식 x개인정보
     if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
-      logger.warn("로그인 실패 - 비밀번호 불일치: {}", requestDto.getUserId());
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
     //JWT토큰 생성
     String token = jwtTokenProvider.generateToken(member.getUserId());
-    logger.info("로그인 성공: userId: {}", requestDto.getUserId());
 
     return MemberLoginResponseDto.builder()
         .userId(member.getUserId())
@@ -170,10 +139,8 @@ public class MemberServiceImpl implements MemberService {
   //회원가입 내용
   @Override
   public void signup(MemberSignupRequestDto requestDto) {
-    logger.info("회원가입 시도: userId= {}", requestDto.getUserId());
     //중복검사
     memberRepository.findByUserId(requestDto.getUserId()).ifPresent(member -> {
-      logger.warn("회원가입 실패 - 중복된 아이디: {}", requestDto.getUserId());
       throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
     });
     //비밀번호 암호화
@@ -187,11 +154,11 @@ public class MemberServiceImpl implements MemberService {
         .nickname(requestDto.getNickname())
         .favoriteTeam(requestDto.getFavoriteTeam())
         .role(Role.USER) //기본값 일반유저
+        .active(true)
         .build();
 
     // 저장
     memberRepository.save(member);
-    logger.info("회원가입 성공: userId: {}", requestDto.getUserId());
   }
 
 }

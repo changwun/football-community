@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,16 +37,15 @@ public class MemberController {
 
   private final MemberService memberService;
 
-  @DeleteMapping("/withraw")
-  public ResponseEntity<?> withrawMember(
+  @DeleteMapping("/withdraw")
+  public ResponseEntity<?> withdrawMember(
       @RequestBody @Valid MemberWithdrawRequestDto requestDto,
       Authentication authentication) {
     String userId = authentication.getName();
     logger.info("회원 탈퇴 요청 접수: userId={}, confirmText='{}'", userId, requestDto.getConfirmText());
 
-    memberService.withrawMember(userId, requestDto);
+    memberService.withdrawMember(userId, requestDto);
 
-    logger.info("회원 탈퇴 처리 완료: userId={}", userId);
     return ResponseEntity.ok().body(Map.of("seccess", true, "message", "회원 탈퇴가 성공적으로 처리되었습니다."));
   }
 
@@ -59,13 +59,13 @@ public class MemberController {
 
     memberService.changePassword(userId, requestDto);
 
-    logger.info("비밀번호 변경 성공: userId={}", userId);
     return ResponseEntity.ok().body(Map.of("success", true, "message", "비밀번호가 성공적으로 변경되었습니다."));
   }
 
 
   //관리자용: PK로 회원 조회
   @GetMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<MemberResponseDto> getMemberByIdForAdmin(@PathVariable Long id) {
     logger.info("관리자 회원 상세 조회 요청: id={}", id);
     MemberResponseDto dto = memberService.getMemberInfoByIdForAdmin(id);
@@ -74,6 +74,7 @@ public class MemberController {
 
   //관리자용: userId로 회원 조회
   @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<MemberResponseDto> getMemberByUserIdForAdmin(@RequestParam String userId) {
     logger.info("관리자 회원 상세 조회 요청: userId{}", userId);
     MemberResponseDto dto = memberService.getMemberInfoByUserIdForAdmin(userId);
@@ -85,7 +86,6 @@ public class MemberController {
   public ResponseEntity<MemberResponseDto> getMyInfo() {
     logger.debug("/members/me 요청 수신");
     String userId = memberService.getCurrentUserId();
-    logger.info("현재 로그인한 사용자: {}", userId);
     MemberResponseDto memberInfo = memberService.getMemberInfo(userId);
     return ResponseEntity.ok(memberInfo);
   }
@@ -95,7 +95,6 @@ public class MemberController {
   public ResponseEntity<String> signup(@Valid @RequestBody MemberSignupRequestDto requestDto) {
     logger.info("회원가입 요청 수신: userId={}", requestDto.getUserId());
     memberService.signup(requestDto);
-    logger.info("회원가입 성공: userId={}", requestDto.getUserId());
     return ResponseEntity.ok("회원가입 완료");// 재 풀 리퀘스트 위한 주석 추가.
   }
 
@@ -104,7 +103,6 @@ public class MemberController {
       @Valid @RequestBody MemberLoginRequestDto requestDto) {
     logger.info("로그인 요청 수신: userId={}", requestDto.getUserId());
     MemberLoginResponseDto response = memberService.login(requestDto);
-    logger.info("로그인 성공: userId={}", requestDto.getUserId());
     return ResponseEntity.ok(response);
   }
 }

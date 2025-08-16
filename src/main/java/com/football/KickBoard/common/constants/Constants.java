@@ -7,6 +7,6 @@ public final class Constants {
 
   }
 
-  public static final String WITHRAW_CONFIRM_TEXT = "회원탈퇴";
+  public static final String WITHDRAW_CONFIRM_TEXT = "회원탈퇴";
 
 }
