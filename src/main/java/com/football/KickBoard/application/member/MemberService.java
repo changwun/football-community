@@ -32,5 +32,5 @@ public interface MemberService {
   // 반환값이 없으므로 void 통한 메서드 처리.
   void changePassword(String userId, PasswordChangeRequestDto requestDto);
 
-  void withrawMember(String userId, MemberWithdrawRequestDto requestDto);
+  void withdrawMember(String userId, MemberWithdrawRequestDto requestDto);
 }
