@@ -8,6 +8,7 @@ import com.football.KickBoard.web.member.dto.MemberResponseDto;
 import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
 import com.football.KickBoard.web.member.dto.MemberWithdrawRequestDto;
 import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public interface MemberService {
 
   void signup(MemberSignupRequestDto requestDto);
 
-  MemberLoginResponseDto login(MemberLoginRequestDto requestDto);
+  MemberLoginResponseDto login(MemberLoginRequestDto requestDto, HttpServletRequest request);
 
   MemberResponseDto getMemberInfo(String userId);
 

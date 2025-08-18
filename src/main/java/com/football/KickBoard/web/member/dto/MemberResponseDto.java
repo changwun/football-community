@@ -1,6 +1,7 @@
 package com.football.KickBoard.web.member.dto;
 
 import com.football.KickBoard.domain.member.Member;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,6 +16,7 @@ public class MemberResponseDto {
   private String favoriteTeam;
   private String role;
 
+
   //중복되어 사용하는 정보 toDto 처리
   public static MemberResponseDto fromEntity(Member m) {
     return new MemberResponseDto(
@@ -24,6 +26,7 @@ public class MemberResponseDto {
         m.getEmail(),
         m.getFavoriteTeam(),
         m.getRole() != null ? m.getRole().name() : "USER"
+
     );
   }
 }

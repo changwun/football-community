@@ -11,6 +11,7 @@ import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
 
 import com.football.KickBoard.web.member.dto.MemberWithdrawRequestDto;
 import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class MemberController {
 
   private final MemberService memberService;
 
+  //관리자 회원 목록 조회
   @GetMapping("/admin")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Page<MemberListResponseDto>> getMemberListAdmin(
@@ -50,6 +52,7 @@ public class MemberController {
     return ResponseEntity.ok(memberList);
   }
 
+  //회원 탈퇴
   @DeleteMapping("/withdraw")
   public ResponseEntity<?> withdrawMember(
       @RequestBody @Valid MemberWithdrawRequestDto requestDto,
@@ -64,7 +67,7 @@ public class MemberController {
 
 
 
-
+  //비밀번호 변경
   @PutMapping("/password")
   public ResponseEntity<?> changePassword(
       @RequestBody @Valid PasswordChangeRequestDto requestDto,
@@ -115,9 +118,9 @@ public class MemberController {
 
   @PostMapping("/login")
   public ResponseEntity<MemberLoginResponseDto> login(
-      @Valid @RequestBody MemberLoginRequestDto requestDto) {
+      @Valid @RequestBody MemberLoginRequestDto requestDto, HttpServletRequest request) {
     logger.info("로그인 요청 수신: userId={}", requestDto.getUserId());
-    MemberLoginResponseDto response = memberService.login(requestDto);
+    MemberLoginResponseDto response = memberService.login(requestDto,request);
     return ResponseEntity.ok(response);
   }
 }

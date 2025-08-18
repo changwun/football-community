@@ -29,6 +29,7 @@ public class MemberListResponseDto {
     this.nickname = member.getNickname();
     this.role = member.getRole().name();
     this.createdAt = member.getCreatedAt();
+    this.lastLoginAt = member.getLastLoginAt();
     this.active = member.isActive();
   }
 }
