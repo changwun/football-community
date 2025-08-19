@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class WebUtils {
+public class WebPropertyProvider {
 
 
   // IP 주소 추출 메서드 (프록시 서버 등을 고려)

@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Getter
 @Setter
@@ -18,5 +21,12 @@ public class MemberListRequestDto {
   private String sortBy = "createdAt";
   private String sortDirection = "desc";
 
+  // Pageable 변환 메서드 추가
+  public Pageable toPageable() {
+    Sort sort = "asc".equalsIgnoreCase(sortDirection) ?
+        Sort.by(sortBy).ascending() :
+        Sort.by(sortBy).descending();
+    return PageRequest.of(page, size, sort);
+  }
 
 }

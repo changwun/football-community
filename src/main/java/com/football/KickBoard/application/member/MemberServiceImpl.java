@@ -1,6 +1,6 @@
 package com.football.KickBoard.application.member;
 
-import com.football.KickBoard.common.WebUtils;
+import com.football.KickBoard.common.WebPropertyProvider;
 import com.football.KickBoard.common.security.JwtTokenProvider;
 import com.football.KickBoard.domain.member.LoginHistory;
 import com.football.KickBoard.domain.member.LoginHistoryRepository;
@@ -24,7 +24,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,38 +43,15 @@ public class MemberServiceImpl implements MemberService {
 
   //회원 리스트 검색(관리자 기능)
   @Override
-  public Page<MemberListResponseDto> getMemberListForAdmin(MemberListRequestDto requestDto){
+  public Page<MemberListResponseDto> getMemberListForAdmin(MemberListRequestDto requestDto) {
+    Pageable pageable = requestDto.toPageable();
 
-    Pageable pageable = PageRequest.of(
-        requestDto.getPage(),
-        requestDto.getSize(),
-        Sort.Direction.fromString(requestDto.getSortDirection()),
-        requestDto.getSortBy()
+    Page<Member> memberPage = memberRepository.searchMembers(
+        requestDto.getActiveStatus(),  // Boolean
+        requestDto.getSearchKeyword(), // String
+        pageable
     );
-    Page<Member> memberPage;
-    //null이 아니면 서치키워드 반환, null이면 빈 문자열 처리
-    String searchKeyword = requestDto.getSearchKeyword() != null ?
-        requestDto.getSearchKeyword() : "";
-    //검색 조건에 맞춰서 호출
-    if (requestDto.getActiveStatus() != null){
-      if (!searchKeyword.isEmpty()){
-        memberPage = memberRepository.findByActiveAndUserIdContainingOrActiveAndEmailContainingOrActiveAndNicknameContaining(
-            requestDto.getActiveStatus(), searchKeyword,
-            requestDto.getActiveStatus(), searchKeyword,
-            requestDto.getActiveStatus(), searchKeyword,
-            pageable
-        );
-      }else {
-        memberPage = memberRepository.findByActive(requestDto.getActiveStatus(),
-            pageable);
-      }
-    } else if (!searchKeyword.isEmpty()) {
-      memberPage = memberRepository.findByUserIdContainingOrEmailContainingOrNicknameContaining(
-          searchKeyword,searchKeyword,searchKeyword, pageable
-      );
-    }else {
-      memberPage = memberRepository.findAll(pageable);
-    }
+
     return memberPage.map(MemberListResponseDto::new);
   }
 
@@ -178,19 +154,6 @@ public class MemberServiceImpl implements MemberService {
     //마지막 로그인 시간 업데이트
     member.updateLastLoginAt();
     memberRepository.save(member);
-
-    String ipAddress = WebUtils.getClientIp(request);
-    String userAgent = WebUtils.getUserAgent(request);
-
-    //로그인 히스토리 저장
-    LoginHistory history = LoginHistory.builder()
-        .member(member)
-        .loginAt(LocalDateTime.now())
-        .ipAddress(ipAddress)
-        .userAgent(userAgent)
-        .build();
-
-    loginHistoryRepository.save(history);
 
     //JWT토큰 생성
     String token = jwtTokenProvider.generateToken(member.getUserId());
