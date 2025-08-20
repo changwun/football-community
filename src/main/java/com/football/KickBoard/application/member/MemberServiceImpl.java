@@ -1,19 +1,29 @@
 package com.football.KickBoard.application.member;
 
+import com.football.KickBoard.common.WebPropertyProvider;
 import com.football.KickBoard.common.security.JwtTokenProvider;
+import com.football.KickBoard.domain.member.LoginHistory;
+import com.football.KickBoard.domain.member.LoginHistoryRepository;
 import com.football.KickBoard.domain.member.Member;
 import com.football.KickBoard.domain.member.MemberRepository;
 import com.football.KickBoard.domain.member.Role;
+import com.football.KickBoard.web.member.dto.MemberListRequestDto;
+import com.football.KickBoard.web.member.dto.MemberListResponseDto;
 import com.football.KickBoard.web.member.dto.MemberLoginRequestDto;
 import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
 import com.football.KickBoard.web.member.dto.MemberResponseDto;
 import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
 import com.football.KickBoard.web.member.dto.MemberWithdrawRequestDto;
 import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +38,22 @@ public class MemberServiceImpl implements MemberService {
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
+  private final LoginHistoryRepository loginHistoryRepository;
+
+
+  //회원 리스트 검색(관리자 기능)
+  @Override
+  public Page<MemberListResponseDto> getMemberListForAdmin(MemberListRequestDto requestDto) {
+    Pageable pageable = requestDto.toPageable();
+
+    Page<Member> memberPage = memberRepository.searchMembers(
+        requestDto.getActiveStatus(),  // Boolean
+        requestDto.getSearchKeyword(), // String
+        pageable
+    );
+
+    return memberPage.map(MemberListResponseDto::new);
+  }
 
   //회원 탈퇴 서비스 구현
   @Override
@@ -111,7 +137,7 @@ public class MemberServiceImpl implements MemberService {
 
 
   @Override
-  public MemberLoginResponseDto login(MemberLoginRequestDto requestDto) {
+  public MemberLoginResponseDto login(MemberLoginRequestDto requestDto, HttpServletRequest request) {
 
     Member member = memberRepository.findByUserId(requestDto.getUserId())
         .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디 입니다."));
@@ -125,6 +151,10 @@ public class MemberServiceImpl implements MemberService {
     if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
+    //마지막 로그인 시간 업데이트
+    member.updateLastLoginAt();
+    memberRepository.save(member);
+
     //JWT토큰 생성
     String token = jwtTokenProvider.generateToken(member.getUserId());
 
@@ -134,6 +164,10 @@ public class MemberServiceImpl implements MemberService {
         .build();
 
   }
+
+
+
+
 
 
   //회원가입 내용
@@ -155,6 +189,7 @@ public class MemberServiceImpl implements MemberService {
         .favoriteTeam(requestDto.getFavoriteTeam())
         .role(Role.USER) //기본값 일반유저
         .active(true)
+        .createdAt(LocalDateTime.now())
         .build();
 
     // 저장

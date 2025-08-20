@@ -2,6 +2,7 @@ package com.football.KickBoard.domain.member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -15,6 +16,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
@@ -22,6 +25,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @Table(name = "members")
+@EntityListeners(AuditingEntityListener.class)
 public class Member {
 
   @Id
@@ -46,12 +50,20 @@ public class Member {
   @Column(nullable = false)
   private Role role;
 
+  @Builder.Default
   @Column(nullable = false)
-  private boolean active = true;//기본값 트루(활성)
+  private boolean active = true;
 
   private LocalDateTime deletedAt;
 
-  public void deactivate() {
+  private LocalDateTime createdAt;
+  private LocalDateTime lastLoginAt;
+
+  public void updateLastLoginAt() {
+    this.lastLoginAt = LocalDateTime.now();
+  }
+
+  public void deactivate(){
     this.active = false;
     this.deletedAt = LocalDateTime.now();
   }
