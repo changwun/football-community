@@ -73,14 +73,12 @@ public class MemberServiceImpl implements MemberService {
     Member member = memberRepository.findByUserId(userId)
         .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
-    //현재 비밀번호 확인
+    //현재 비밀번호 확인(기존 비밀번호 더블체크 -> 비밀번호 동일한지만체크(더블체크는 클라이언트 몫))
     if (!passwordEncoder.matches(requestDto.getCurrentPassword(), member.getPassword())) {
       throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
     }
-    //새 비밀번호 확인 비밀번호 일치 확인
-    if (!requestDto.getNewPassword().equals(requestDto.getConfirmPassword())) {
-      throw new IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
-    }
+
+
     //비밀번호 변경
     String encodedPassword = passwordEncoder.encode(requestDto.getNewPassword());
     member.updatePassword(encodedPassword);
@@ -142,8 +140,7 @@ public class MemberServiceImpl implements MemberService {
     if (!member.isActive()) {
       throw new IllegalArgumentException("탈퇴되었거나 비활성 상태인 계정입니다.");
     }
-
-    //비밀번호는 위와 같이 findByuserId처럼 DB에서 직접찾는형식 x개인정보
+    //DB에서 암호화된 비밀번호와 입력한 비밀번호 비교
     if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
       throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
     }
@@ -170,22 +167,19 @@ public class MemberServiceImpl implements MemberService {
   @Override
   public void signup(MemberSignupRequest requestDto) {
     //중복검사
-    memberRepository.findByUserId(requestDto.getUserId()).ifPresent(member -> {
+    if (memberRepository.existsByUserId(requestDto.getUserId()))  {
       throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
-    });
-    //비밀번호 암호화
-    String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
+    }
 
     //멤버 엔티티 생성
     Member member = Member.builder()
         .userId(requestDto.getUserId())
-        .password(encodedPassword)
+        .password(passwordEncoder.encode(requestDto.getPassword()))
         .email(requestDto.getEmail())
         .nickname(requestDto.getNickname())
         .favoriteTeam(requestDto.getFavoriteTeam())
         .role(Role.USER) //기본값 일반유저
         .active(true)
-        .createdAt(LocalDateTime.now())
         .build();
 
     // 저장
