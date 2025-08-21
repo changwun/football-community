@@ -1,4 +1,4 @@
-package com.football.KickBoard.web.member.dto;
+package com.football.KickBoard.web.member.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +12,7 @@ import org.springframework.data.domain.Sort;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MemberListRequestDto {
+public class MemberListRequest {
   private String searchKeyword; //userId,nickname,email 등
   private Boolean activeStatus; //null:전체,true:활성만,false:비활성만
 

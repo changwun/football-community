@@ -1,16 +1,15 @@
 package com.football.KickBoard.web.member;
 
 import com.football.KickBoard.application.member.MemberService;
-import com.football.KickBoard.application.member.MemberServiceImpl;
-import com.football.KickBoard.web.member.dto.MemberListRequestDto;
-import com.football.KickBoard.web.member.dto.MemberListResponseDto;
-import com.football.KickBoard.web.member.dto.MemberLoginRequestDto;
-import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
-import com.football.KickBoard.web.member.dto.MemberResponseDto;
-import com.football.KickBoard.web.member.dto.MemberSignupRequestDto;
+import com.football.KickBoard.web.member.model.request.MemberListRequest;
+import com.football.KickBoard.web.member.model.response.MemberListResponse;
+import com.football.KickBoard.web.member.model.request.MemberLoginRequest;
+import com.football.KickBoard.web.member.model.response.MemberLoginResponse;
+import com.football.KickBoard.web.member.model.response.MemberResponse;
+import com.football.KickBoard.web.member.model.request.MemberSignupRequest;
 
-import com.football.KickBoard.web.member.dto.MemberWithdrawRequestDto;
-import com.football.KickBoard.web.member.dto.PasswordChangeRequestDto;
+import com.football.KickBoard.web.member.model.request.MemberWithdrawRequest;
+import com.football.KickBoard.web.member.model.request.PasswordChangeRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -21,7 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -45,17 +43,17 @@ public class MemberController {
   //관리자 회원 목록 조회
   @GetMapping("/admin")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<MemberListResponseDto>> getMemberListAdmin(
-      @ModelAttribute MemberListRequestDto requestDto){
+  public ResponseEntity<Page<MemberListResponse>> getMemberListAdmin(
+      @ModelAttribute MemberListRequest requestDto){
     logger.info("관리자 회원 목록 조회 요청 접수: {}",requestDto);
-    Page<MemberListResponseDto> memberList = memberService.getMemberListForAdmin(requestDto);
+    Page<MemberListResponse> memberList = memberService.getMemberListForAdmin(requestDto);
     return ResponseEntity.ok(memberList);
   }
 
   //회원 탈퇴
   @DeleteMapping("/withdraw")
   public ResponseEntity<?> withdrawMember(
-      @RequestBody @Valid MemberWithdrawRequestDto requestDto,
+      @RequestBody @Valid MemberWithdrawRequest requestDto,
       Authentication authentication) {
     String userId = authentication.getName();
     logger.info("회원 탈퇴 요청 접수: userId={}, confirmText='{}'", userId, requestDto.getConfirmText());
@@ -70,7 +68,7 @@ public class MemberController {
   //비밀번호 변경
   @PutMapping("/password")
   public ResponseEntity<?> changePassword(
-      @RequestBody @Valid PasswordChangeRequestDto requestDto,
+      @RequestBody @Valid PasswordChangeRequest requestDto,
       Authentication authentication) {
     String userId = authentication.getName();
     logger.info("비밀번호 변경 요청 접수: userId={}", userId);
@@ -84,43 +82,43 @@ public class MemberController {
   //관리자용: PK로 회원 조회
   @GetMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<MemberResponseDto> getMemberByIdForAdmin(@PathVariable Long id) {
+  public ResponseEntity<MemberResponse> getMemberByIdForAdmin(@PathVariable Long id) {
     logger.info("관리자 회원 상세 조회 요청: id={}", id);
-    MemberResponseDto dto = memberService.getMemberInfoByIdForAdmin(id);
+    MemberResponse dto = memberService.getMemberInfoByIdForAdmin(id);
     return ResponseEntity.ok(dto);
   }
 
   //관리자용: userId로 회원 조회
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<MemberResponseDto> getMemberByUserIdForAdmin(@RequestParam String userId) {
+  public ResponseEntity<MemberResponse> getMemberByUserIdForAdmin(@RequestParam String userId) {
     logger.info("관리자 회원 상세 조회 요청: userId{}", userId);
-    MemberResponseDto dto = memberService.getMemberInfoByUserIdForAdmin(userId);
+    MemberResponse dto = memberService.getMemberInfoByUserIdForAdmin(userId);
     return ResponseEntity.ok(dto);
   }
 
   //토큰 아이디 추출 테스트용 getMapping
   @GetMapping("/me")
-  public ResponseEntity<MemberResponseDto> getMyInfo() {
+  public ResponseEntity<MemberResponse> getMyInfo() {
     String userId = memberService.getCurrentUserId();
     logger.info("현재 로그인한 사용자: {}", userId);
-    MemberResponseDto memberInfo = memberService.getMemberInfo(userId);
+    MemberResponse memberInfo = memberService.getMemberInfo(userId);
     return ResponseEntity.ok(memberInfo);
   }
 
 
   @PostMapping("/signup")
-  public ResponseEntity<String> signup(@Valid @RequestBody MemberSignupRequestDto requestDto) {
+  public ResponseEntity<String> signup(@Valid @RequestBody MemberSignupRequest requestDto) {
     logger.info("회원가입 요청 수신: userId={}", requestDto.getUserId());
     memberService.signup(requestDto);
     return ResponseEntity.ok("회원가입 완료");// 재 풀 리퀘스트 위한 주석 추가.
   }
 
   @PostMapping("/login")
-  public ResponseEntity<MemberLoginResponseDto> login(
-      @Valid @RequestBody MemberLoginRequestDto requestDto, HttpServletRequest request) {
+  public ResponseEntity<MemberLoginResponse> login(
+      @Valid @RequestBody MemberLoginRequest requestDto, HttpServletRequest request) {
     logger.info("로그인 요청 수신: userId={}", requestDto.getUserId());
-    MemberLoginResponseDto response = memberService.login(requestDto,request);
+    MemberLoginResponse response = memberService.login(requestDto,request);
     return ResponseEntity.ok(response);
   }
 }

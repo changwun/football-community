@@ -1,4 +1,4 @@
-package com.football.KickBoard.web.member.dto;
+package com.football.KickBoard.web.member.model.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PasswordChangeRequestDto {
+public class PasswordChangeRequest {
   @NotBlank(message = "현재 비밀번호는 필수입니다.")
   private String currentPassword;
 

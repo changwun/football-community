@@ -1,4 +1,4 @@
-package com.football.KickBoard.web.member.dto;
+package com.football.KickBoard.web.member.model.request;
 
 import com.football.KickBoard.common.constants.Constants;
 import com.football.KickBoard.common.validation.ExactValue;
@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class MemberWithdrawRequestDto {
+public class MemberWithdrawRequest {
 
   @NotBlank(message = "비밀번호는 필수입니다.")
   private String password;

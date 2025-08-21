@@ -5,7 +5,7 @@ import com.football.KickBoard.domain.member.LoginHistory;
 import com.football.KickBoard.domain.member.LoginHistoryRepository;
 import com.football.KickBoard.domain.member.Member;
 import com.football.KickBoard.domain.member.MemberRepository;
-import com.football.KickBoard.web.member.dto.MemberLoginResponseDto;
+import com.football.KickBoard.web.member.model.response.MemberLoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +27,11 @@ public class LoginHistoryAspect {
       returning = "result")
 
   public void saveLoginHistory(Object result) {
-    if (!(result instanceof MemberLoginResponseDto)) {
+    if (!(result instanceof MemberLoginResponse)) {
       return; // 로그인 결과가 우리가 기대한 DTO가 아니면 스킵
     }
 
-    MemberLoginResponseDto response = (MemberLoginResponseDto) result;
+    MemberLoginResponse response = (MemberLoginResponse) result;
 // 로그인한 멤버 찾기 (userId 기준 - 네 도메인에 따라 PK or 아이디 문자열)
     Member member = memberRepository.findByUserId(response.getUserId())
         .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));

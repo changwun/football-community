@@ -1,13 +1,12 @@
-package com.football.KickBoard.web.member.dto;
+package com.football.KickBoard.web.member.model.response;
 
 import com.football.KickBoard.domain.member.Member;
-import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class MemberResponseDto {
+public class MemberResponse {
 
   private Long id;
   private String userId;
@@ -18,8 +17,8 @@ public class MemberResponseDto {
 
 
   //중복되어 사용하는 정보 toDto 처리
-  public static MemberResponseDto fromEntity(Member m) {
-    return new MemberResponseDto(
+  public static MemberResponse fromEntity(Member m) {
+    return new MemberResponse(
         m.getId(),
         m.getUserId(),
         m.getNickname(),

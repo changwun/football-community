@@ -1,4 +1,4 @@
-package com.football.KickBoard.web.member.dto;
+package com.football.KickBoard.web.member.model.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MemberLoginResponseDto {
+public class MemberLoginResponse {
 
   private String userId;
   private String token;

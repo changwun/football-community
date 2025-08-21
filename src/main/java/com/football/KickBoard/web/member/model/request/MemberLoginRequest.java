@@ -1,10 +1,10 @@
-package com.football.KickBoard.web.member.dto;
+package com.football.KickBoard.web.member.model.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
 @Getter
-public class MemberLoginRequestDto {
+public class MemberLoginRequest {
 
   @NotBlank
   private String userId;

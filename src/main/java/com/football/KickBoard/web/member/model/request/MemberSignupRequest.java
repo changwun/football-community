@@ -1,4 +1,4 @@
-package com.football.KickBoard.web.member.dto;
+package com.football.KickBoard.web.member.model.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MemberSignupRequestDto {
+public class MemberSignupRequest {
 
   @NotBlank(message = "아이디 입력은 필수입니다.")
   private String userId;
