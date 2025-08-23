@@ -1,6 +1,7 @@
 package com.football.kick_board.web.member.model.response;
 
 import com.football.kick_board.domain.member.Member;
+import com.football.kick_board.domain.member.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,7 +14,7 @@ public class MemberResponse {
   private String nickname;
   private String email;
   private String favoriteTeam;
-  private String role;
+  private Role role;
 
 
   //중복되어 사용하는 정보 toDto 처리
@@ -24,7 +25,7 @@ public class MemberResponse {
         m.getNickname(),
         m.getEmail(),
         m.getFavoriteTeam(),
-        m.getRole() != null ? m.getRole().name() : "USER"
+        m.getRole()
 
     );
   }

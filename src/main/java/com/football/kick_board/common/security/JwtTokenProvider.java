@@ -11,15 +11,16 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Date;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
 
-  private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
 
   //TODO 로그아웃 처리 (JWT 블랙리스트 or 클라이언트 삭제),Refresh Token 도입 (토큰 재발급)
 
@@ -33,7 +34,7 @@ public class JwtTokenProvider {
   @PostConstruct
   public void init() {
     this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-    logger.info("JWT 키 초기화 완료. 키 길이: {} bytes", SECRET_KEY.getBytes().length);
+    log.info("JWT 키 초기화 완료. 키 길이: {} bytes", SECRET_KEY.getBytes().length);
   }
 
   public String resolveToken(HttpServletRequest request) {
@@ -53,15 +54,15 @@ public class JwtTokenProvider {
           .parseClaimsJws(token);
       return true;
     } catch (ExpiredJwtException e) {
-      logger.warn("토큰 만료: " + e.getMessage());
+      log.warn("토큰 만료: " + e.getMessage());
     } catch (UnsupportedJwtException e) {
-      logger.error("지원하지 않는 JWT; " + e.getMessage());
+      log.error("지원하지 않는 JWT; " + e.getMessage());
     } catch (MalformedJwtException e) {
-      logger.error("잘못된 JWT 형식: " + e.getMessage());
+      log.error("잘못된 JWT 형식: " + e.getMessage());
     } catch (SignatureException e) {
-      logger.error("잘못된 서명:" + e.getMessage());
+      log.error("잘못된 서명:" + e.getMessage());
     } catch (IllegalArgumentException e) {
-      logger.error("JWT claims가 비어있음: " + e.getMessage());
+      log.error("JWT claims가 비어있음: " + e.getMessage());
     }
     return false;
   }

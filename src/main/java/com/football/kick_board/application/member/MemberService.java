@@ -19,18 +19,16 @@ public interface MemberService {
 
   MemberLoginResponse login(MemberLoginRequest requestDto, HttpServletRequest request);
 
-  MemberResponse getMemberInfo(String userId);
+  MemberResponse getMemberInfo();
 
   MemberResponse getMemberInfoByIdForAdmin(Long id);//관리자 전용 id조회
 
   MemberResponse getMemberInfoByUserIdForAdmin(String userId);//관리자 전용 유저id 조회
 
-  String getCurrentUserId();
-
   Page<MemberListResponse> getMemberListForAdmin(MemberListRequest requestDto);
 
   // 반환값이 없으므로 void 통한 메서드 처리.
-  void changePassword(String userId, PasswordChangeRequest requestDto);
+  void changePassword(PasswordChangeRequest requestDto);
 
-  void withdrawMember(String userId, MemberWithdrawRequest requestDto);
+  void withdrawMember(MemberWithdrawRequest requestDto);
 }

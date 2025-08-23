@@ -18,8 +18,6 @@ public class PasswordChangeRequest {
       message = "비밀번호는 최소 8자 이상이며, 문자, 숫자, 특수문자를 포함해야 합니다")
   private String newPassword;
 
-  @NotBlank(message = "새 바말번호 확인은 필수입니다.")
-  private String confirmPassword;
 
 
 

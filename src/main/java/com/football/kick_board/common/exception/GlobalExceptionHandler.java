@@ -1,6 +1,7 @@
 package com.football.kick_board.common.exception;
 
 import io.jsonwebtoken.JwtException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import java.util.HashMap;
@@ -17,9 +18,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
-  private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
 
   //유효성 검증 실패 시 예외 처리
@@ -51,7 +52,7 @@ public class GlobalExceptionHandler {
   //권한 없음 예외 처리(403 Forbidden)
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException ex) {
-    logger.warn("Access Denied: {}", ex.getMessage());
+    log.warn("Access Denied: {}", ex.getMessage());
     Map<String, String> error = new HashMap<>();
     error.put("message", "접근 권한이 없습니다.");
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);

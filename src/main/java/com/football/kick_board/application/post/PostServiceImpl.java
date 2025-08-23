@@ -1,5 +1,6 @@
 package com.football.kick_board.application.post;
 
+import com.football.kick_board.common.security.SecurityUtils;
 import com.football.kick_board.domain.member.Member;
 import com.football.kick_board.domain.member.MemberRepository;
 import com.football.kick_board.domain.post.Post;
@@ -27,7 +28,8 @@ public class PostServiceImpl implements PostService{
   //게시글 등록
   @Override
   @Transactional
-  public PostResponse createdPost(String currentUserId, PostCreateRequest requestDto) {
+  public PostResponse createdPost(PostCreateRequest requestDto) {
+    String currentUserId = SecurityUtils.getCurrentUserId();
     Member author = memberRepository.findByUserId(currentUserId)
         .orElseThrow(() -> new IllegalArgumentException("작성자를 찾을 수 없습니다."));
 
@@ -68,7 +70,8 @@ public class PostServiceImpl implements PostService{
     if (!post.isActive()) {
       throw new IllegalArgumentException("삭제되었거나 비활성 상태인 게시글입니다.");
     }
-    post.increaseViewCount();
+    postRepository.incrementViewCount(postId);//데이터베이스에서 직접 조회수 증가
+    post.incrementViewCountInMemory();
     return new PostResponse(post);
 
   }
@@ -76,8 +79,8 @@ public class PostServiceImpl implements PostService{
   //게시글 수정
   @Override
   @Transactional
-  public PostResponse updatePost(String currentUserId, Long postId,
-      PostUpdateRequest requestDto) {
+  public PostResponse updatePost(Long postId,PostUpdateRequest requestDto) {
+    String currentUserId = SecurityUtils.getCurrentUserId();
     Post post = postRepository.findById(postId)
         .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
     if (!post.isActive()) {
@@ -93,7 +96,8 @@ public class PostServiceImpl implements PostService{
   //게시글 삭제(소프트 삭제)
   @Override
   @Transactional
-  public void deletePost(String currentUserId, Long postId) {
+  public void deletePost(Long postId) {
+    String currentUserId = SecurityUtils.getCurrentUserId();
     Post post = postRepository.findById(postId)
         .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
     if (!post.isActive()) {
@@ -105,16 +109,6 @@ public class PostServiceImpl implements PostService{
     post.deactivate();
   }
 
-
-  // 로그인을 동일한 아이디로 동일하게 한다면 동시에 가입하면 에러로 처리 할 수도 있음(사용자 입장에서는 사용 중 아이디로 확인.)
-  // 빌더 대신 엑세서스 + 체인 해가지고 트루
-  // 멤버에서 role은(멤버리스폰스디티오) 이넘으로 바꿔가지고 사용
-  //패스워드패인지("탈퇴확인") 리퀘스트 디티오 -> 한번 더 체크가 클라이언트(프론트엔드)에서 하는 경우가 많음
-  //로깅 필터 수정 필요.(빼고 적용)로거 처리 같은경우 @Slf4j 어노테이션 사용
-  //글로벌 익셉션 -> 메세지 필드 , 디테일 필드 따로 만들어서 반환하는게 좋을 것 같음.(세분화,구조화 된 익스턴스 필요)
-  //내부 외부 코드 분류
-  //만약 서비스 구현체 따로 분리하는게 하나씩이면 서비스 로직 안에서 한번에 처리 해도 되긴 함
-  // final 자주 사용하는거 웬만하면 다 붙이는게 낫긴함.
 
 }
 

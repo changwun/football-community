@@ -1,6 +1,7 @@
 package com.football.kick_board.application.member;
 
 import com.football.kick_board.common.security.JwtTokenProvider;
+import com.football.kick_board.common.security.SecurityUtils;
 import com.football.kick_board.domain.member.LoginHistoryRepository;
 import com.football.kick_board.domain.member.Member;
 import com.football.kick_board.domain.member.MemberRepository;
@@ -16,8 +17,6 @@ import com.football.kick_board.web.member.model.request.PasswordChangeRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
 
-  private static final Logger logger = LoggerFactory.getLogger(MemberServiceImpl.class);
 
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
@@ -54,9 +52,10 @@ public class MemberServiceImpl implements MemberService {
   //회원 탈퇴 서비스 구현
   @Override
   @Transactional
-  public void withdrawMember(String userId, MemberWithdrawRequest requestDto) {
+  public void withdrawMember(MemberWithdrawRequest requestDto) {
     //회원 조회
-    Member member = memberRepository.findByUserId(userId)
+    String currentUserId = SecurityUtils.getCurrentUserId();
+    Member member = memberRepository.findByUserId(currentUserId)
         .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
     if (!passwordEncoder.matches(requestDto.getPassword(), member.getPassword())) {
@@ -68,9 +67,10 @@ public class MemberServiceImpl implements MemberService {
 
   @Override
   @Transactional
-  public void changePassword(String userId, PasswordChangeRequest requestDto) {
+  public void changePassword(PasswordChangeRequest requestDto) {
     //회원 조회
-    Member member = memberRepository.findByUserId(userId)
+    String currentUserId = SecurityUtils.getCurrentUserId();
+    Member member = memberRepository.findByUserId(currentUserId)
         .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
     //현재 비밀번호 확인(기존 비밀번호 더블체크 -> 비밀번호 동일한지만체크(더블체크는 클라이언트 몫))
@@ -89,8 +89,9 @@ public class MemberServiceImpl implements MemberService {
   //본인 정보 조회(UserId 기준)
   @Override
   @Transactional(readOnly = true)
-  public MemberResponse getMemberInfo(String userId) {
-    Member member = memberRepository.findByUserId(userId)
+  public MemberResponse getMemberInfo() {
+    String currenUserId = SecurityUtils.getCurrentUserId();
+    Member member = memberRepository.findByUserId(currenUserId)
         .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
     return MemberResponse.fromEntity(member);
@@ -120,14 +121,6 @@ public class MemberServiceImpl implements MemberService {
 
 
 
-  @Override
-  public String getCurrentUserId() {
-    String currentUser = (String) SecurityContextHolder.getContext()
-        .getAuthentication()
-        .getPrincipal();
-
-    return currentUser;
-  }
 
 
   @Override

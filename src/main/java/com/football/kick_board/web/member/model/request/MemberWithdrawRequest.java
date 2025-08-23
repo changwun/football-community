@@ -15,8 +15,5 @@ public class MemberWithdrawRequest {
   @NotBlank(message = "비밀번호는 필수입니다.")
   private String password;
 
-  @NotBlank(message = "탈퇴 확인을 위해 '회원탈퇴'를 정확히 입력해주세요.")
-  @ExactValue(value = Constants.WITHDRAW_CONFIRM_TEXT, message = "탈퇴 확인 문구가 올바르지 않습니다.'"
-      + Constants.WITHDRAW_CONFIRM_TEXT + "'를 정확히 입력해주세.")
-  private String confirmText;
+
 }
