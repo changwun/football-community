@@ -11,9 +11,9 @@ public class SecurityUtils {
   //@return 인증된 사용자의 Id(userId)
   //@throws IllegalStateException 인증 정보가 없는 경우
 
-  public static String getCurrentUserId(){
+  public static String getCurrentUserId() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || "anonymousUser".equals(authentication.getName())){
+    if (authentication == null || "anonymousUser".equals(authentication.getName())) {
       throw new IllegalArgumentException("인증된 사용자 정보를 찾을 수 없습니다.");
     }
     return authentication.getName();

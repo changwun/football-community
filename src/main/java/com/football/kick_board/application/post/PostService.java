@@ -8,6 +8,7 @@ import com.football.kick_board.web.post.model.request.PostUpdateRequest;
 import org.springframework.data.domain.Page;
 
 public interface PostService {
+
   //게시글 등록
   PostResponse createdPost(PostCreateRequest requestDto);
 
