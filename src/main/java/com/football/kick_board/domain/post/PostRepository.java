@@ -1,5 +1,7 @@
 package com.football.kick_board.domain.post;
 
+import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,7 +11,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
 
-//  //활성 상태인 게시글만 조회
+
+  //  //활성 상태인 게시글만 조회
 //  Page<Post> findByActiveTrue(Pageable pageable);
 //
 //  //특정 작성자의 게시글만 조회
@@ -26,6 +29,9 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
 //      String titleKeyword, String contentKeyword, Pageable pageable);
   @Modifying
   @Query("UPDATE Post p SET p.viewCount = p.viewCount + 1 WHERE p.id = :postId")
-  int incrementViewCount(@Param("postId")Long PostId);
+  int incrementViewCount(@Param("postId") Long PostId);
+
+  @Query("SELECT p FROM Post p LEFT JOIN FETCH p.comments WHERE p.id = :id")
+  Optional<Post> findByIdWithComments(@Param("id") Long id);
 
 }

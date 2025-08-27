@@ -1,13 +1,13 @@
 package com.football.kick_board.common.exception;
 
+import com.football.kick_board.common.exception.ErrorResponse.FieldErrorDetail;
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
-import java.util.HashMap;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -17,82 +17,131 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice
-@Slf4j
-public class GlobalExceptionHandler {
+  @Slf4j
+  @RestControllerAdvice
+  public class GlobalExceptionHandler {
 
+    // 유효성 검증 실패 예외 처리 (400 Bad Request)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(
+        MethodArgumentNotValidException ex, HttpServletRequest request) {
 
+      log.error("유효성 검증 실패: {}", ex.getMessage());
 
-  //유효성 검증 실패 시 예외 처리
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String, String>> handleValidationExceptions(
-      MethodArgumentNotValidException ex) {
-    Map<String, String> errors = new HashMap<>();
-    BindingResult bindingResult = ex.getBindingResult();
+      BindingResult bindingResult = ex.getBindingResult();
+      List<FieldErrorDetail> fieldErrors = new ArrayList<>();
 
-    bindingResult.getAllErrors().forEach(error -> {
-      String filedName = ((FieldError) error).getField();
-      String errorMessage = error.getDefaultMessage();
-      errors.put(filedName, errorMessage);
-    });
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+      for (FieldError fieldError : bindingResult.getFieldErrors()) {
+        fieldErrors.add(ErrorResponse.FieldErrorDetail.builder()
+            .field(fieldError.getField())
+            .code(fieldError.getCode())
+            .message(fieldError.getDefaultMessage())
+            .build());
+      }
+
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("VALIDATION_ERROR")
+          .message("입력값 검증에 실패했습니다.")
+          .path(request.getRequestURI())
+          .errors(fieldErrors)
+          .build();
+
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    // 비즈니스 로직 예외 처리 (409 Conflict)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+        IllegalArgumentException ex, HttpServletRequest request) {
+
+      log.error("비즈니스 로직 예외: {}", ex.getMessage());
+
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("BUSINESS_ERROR")
+          .message(ex.getMessage())
+          .path(request.getRequestURI())
+          .build();
+
+      return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    // 권한 없음 예외 처리 (403 Forbidden)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+        AccessDeniedException ex, HttpServletRequest request) {
+
+      log.warn("접근 권한 없음: {}", ex.getMessage());
+
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("ACCESS_DENIED")
+          .message("접근 권한이 없습니다.")
+          .path(request.getRequestURI())
+          .build();
+
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    // 인증 실패 예외 처리 (401 Unauthorized)
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+        AuthenticationException ex, HttpServletRequest request) {
+
+      log.warn("인증 실패: {}", ex.getMessage());
+
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("AUTHENTICATION_FAILED")
+          .message("인증에 실패했습니다. 다시 로그인해 주세요.")
+          .path(request.getRequestURI())
+          .build();
+
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    // JWT 관련 예외 처리 (401 Unauthorized)
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException(
+        JwtException ex, HttpServletRequest request) {
+
+      log.warn("JWT 예외: {}", ex.getMessage());
+
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("INVALID_TOKEN")
+          .message("유효하지 않거나 만료된 토큰입니다.")
+          .path(request.getRequestURI())
+          .build();
+
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    // 데이터 무결성 위반 예외 처리 (400 Bad Request)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+        DataIntegrityViolationException ex, HttpServletRequest request) {
+
+      log.error("데이터 무결성 위반: {}", ex.getMessage());
+
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("DATA_INTEGRITY_VIOLATION")
+          .message("데이터 무결성 제약 조건을 위반했습니다. 중복된 데이터가 있는지 확인해 주세요.")
+          .path(request.getRequestURI())
+          .build();
+
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    // 기타 모든 예외 처리 (500 Internal Server Error)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleAllExceptions(
+        Exception ex, HttpServletRequest request) {
+
+      log.error("서버 내부 오류: {}", ex.getMessage(), ex);
+
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("INTERNAL_SERVER_ERROR")
+          .message("서버 내부 오류가 발생했습니다.")
+          .path(request.getRequestURI())
+          .build();
+
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
   }
-
-  // IllegalArgumentException 예외 처리 (이미 사용 중인 아이디 등)
-  @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<Map<String, String>> handleIllegalArgumentException(
-      IllegalArgumentException ex) {
-
-    Map<String, String> error = new HashMap<>();
-    error.put("message", ex.getMessage());
-
-    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-  }
-
-  //권한 없음 예외 처리(403 Forbidden)
-  @ExceptionHandler(AccessDeniedException.class)
-  public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException ex) {
-    log.warn("Access Denied: {}", ex.getMessage());
-    Map<String, String> error = new HashMap<>();
-    error.put("message", "접근 권한이 없습니다.");
-    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
-  }
-
-  //인증실패(토큰이 없거나 잘못된 경우, 로그인 실패)
-  @ExceptionHandler(AuthenticationException.class)
-  public ResponseEntity<Map<String, String>> handleAuthenticationException(
-      AuthenticationException ex) {
-    Map<String, String> error = new HashMap<>();
-    error.put("message", "인증에 실패했습니다. 다시 로그인 해주세요.");
-    error.put("detail", ex.getMessage());
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-  }
-
-  //JWT 관련 예외
-  @ExceptionHandler(JwtException.class)
-  public ResponseEntity<Map<String, String>> handleJwtException(JwtException ex) {
-    Map<String, String> error = new HashMap<>();
-    error.put("message", "유효하지 않거나 만료된 토큰입니다.");
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-  }
-
-  //회원가입 시 유니크 키 중복
-  @ExceptionHandler(DataIntegrityViolationException.class)
-  public ResponseEntity<Map<String, String>> handleDataIntegrityViolationException(
-      DataIntegrityViolationException ex) {
-    Map<String, String> error = new HashMap<>();
-    error.put("message", "데이터 무결성 제약 조건을 위반했습니다.");
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-  }
-
-  // 그 외 모든 예외 처리
-  @ExceptionHandler(Exception.class)
-  public ResponseEntity<Map<String, String>> handleAllExceptions(Exception ex) {
-    Map<String, String> error = new HashMap<>();
-    error.put("message", "서버 내부 오류가 발생했습니다.");
-    error.put("detail", ex.getMessage());
-
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-  }
-
-}

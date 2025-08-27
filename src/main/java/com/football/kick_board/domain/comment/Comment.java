@@ -1,7 +1,7 @@
-package com.football.kick_board.domain.post;
+package com.football.kick_board.domain.comment;
 
-import com.football.kick_board.domain.comment.Comment;
 import com.football.kick_board.domain.member.Member;
+import com.football.kick_board.domain.post.Post;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,6 +21,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -29,22 +30,32 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "posts")
-public class Post {
+@Table(name = "comments")
+public class Comment {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false)
-  private String title;
-
-  @Column(nullable = false)
+  @Column(nullable = false, length = 1000)
   private String content;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "member_id", nullable = false)
   private Member author;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "post_id", nullable = false)
+  @Setter
+  private Post post;
+
+  // 대댓글 기능을 위한 자기 참조 관계
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "parent_id")
+  private Comment parent;
+
+  @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Comment> replies = new ArrayList<>();
 
   @CreatedDate
   @Column(updatable = false)
@@ -54,26 +65,22 @@ public class Post {
   private LocalDateTime updatedAt;
 
   @Column(nullable = false)
-  private int viewCount = 0;
-
-
-  @Column(nullable = false)
   private boolean active = true;
 
   private LocalDateTime deletedAt;
 
-  @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Comment> comments = new ArrayList<>();
-
   @Builder
-  public Post(String title, String content, Member author) {
-    this.title = title;
+  public Comment(String content, Member author, Post post, Comment parent) {
     this.content = content;
     this.author = author;
+    this.post = post;
+    this.parent = parent;
+    if (parent != null) {
+      parent.getReplies().add(this);
+    }
   }
 
-  public void update(String title, String content) {
-    this.title = title;
+  public void update(String content) {
     this.content = content;
   }
 
@@ -81,18 +88,6 @@ public class Post {
     this.active = false;
     this.deletedAt = LocalDateTime.now();
   }
-
-  public void incrementViewCountInMemory() {
-    this.viewCount++;
-  }
-
-  // 댓글 관련 편의 메서드
-  public void addComment(Comment comment) {
-    this.comments.add(comment);
-    // 양방향 관계 설정 (Comment에 Post 설정)
-    if (comment.getPost() != this) {
-      comment.setPost(this);
-    }
-
-  }
 }
+
+
