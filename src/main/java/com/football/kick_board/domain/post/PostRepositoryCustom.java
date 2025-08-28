@@ -13,6 +13,6 @@ public interface PostRepositoryCustom {
    * @param pageable     페이징 및 정렬 정보
    * @return 검색 조건에 맞는 Post 엔티티의 Page 객체
    */
-  Page<Post> searchPosts(String keyword, Boolean activeStatus, Pageable pageable);
+  Page<Post> searchPosts(String keyword, Boolean activeStatus, BoardType boardType ,Pageable pageable);
 
 }

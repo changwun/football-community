@@ -3,6 +3,7 @@ package com.football.kick_board.application.post;
 
 import com.football.kick_board.application.like.LikeService;
 import com.football.kick_board.common.security.SecurityUtils;
+import com.football.kick_board.common.validation.ValidationGroups;
 import com.football.kick_board.domain.comment.Comment;
 import com.football.kick_board.domain.member.Member;
 import com.football.kick_board.domain.member.MemberRepository;
@@ -13,8 +14,11 @@ import com.football.kick_board.web.post.model.request.PostCreateRequest;
 import com.football.kick_board.web.post.model.request.PostListRequest;
 import com.football.kick_board.web.post.model.response.PostResponse;
 import com.football.kick_board.web.post.model.request.PostUpdateRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,12 +35,34 @@ public class PostServiceImpl implements PostService {
   private final PostRepository postRepository;
   private final MemberRepository memberRepository;
   private final LikeService likeService;
-
+  private final Validator validator;
 
   //게시글 등록
   @Override
   @Transactional
   public PostResponse createdPost(PostCreateRequest requestDto) {
+    //동적 유효성 검증 수행
+    Class<?> validationGroup;
+    switch (requestDto.getBoardType()) {
+      case GENERAL:
+        validationGroup = ValidationGroups.GeneralPost.class;
+        break;
+      case MERCENARY:
+        validationGroup = ValidationGroups.MercenaryPost.class;
+        break;
+      default:
+        throw new IllegalArgumentException("유효하지 않은 게시글 유형입니다.");
+    }
+    Set<ConstraintViolation<PostCreateRequest>> violations = validator.validate(requestDto, validationGroup);
+
+    if (!violations.isEmpty()) {
+      // 유효성 검증 실패 시 예외 처리
+      String errorMessage = violations.stream()
+          .map(ConstraintViolation::getMessage)
+          .collect(Collectors.joining(", "));
+      throw new IllegalArgumentException("게시글 생성 실패: " + errorMessage);
+    }
+
     String currentUserId = SecurityUtils.getCurrentUserId();
     Member author = memberRepository.findByUserId(currentUserId)
         .orElseThrow(() -> new IllegalArgumentException("작성자를 찾을 수 없습니다."));
@@ -45,6 +71,11 @@ public class PostServiceImpl implements PostService {
         .title(requestDto.getTitle())
         .content(requestDto.getContent())
         .author(author)
+        .boardType(requestDto.getBoardType())
+        .location(requestDto.getLocation())
+        .matchTime(requestDto.getMatchTime())
+        .position(requestDto.getPosition())
+        .neededPersonnel(requestDto.getNeededPersonnel())
         .build();
 
     Post savedPost = postRepository.save(post);
@@ -64,6 +95,7 @@ public class PostServiceImpl implements PostService {
     Page<Post> postPage = postRepository.searchPosts(
         requestDto.getKeyword(),
         requestDto.getActiveStatus(),
+        requestDto.getBoardType(),
         pageable
     );
     return postPage.map(post -> {

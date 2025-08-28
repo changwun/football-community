@@ -56,10 +56,10 @@ public class PostController {
   //게시글 등록
   @PreAuthorize("isAuthenticated()")
   @PostMapping
-  public ResponseEntity<PostResponse> createPost(@RequestBody @Valid PostCreateRequest requestDto) {
-    log.info("게시글 등록 요청: userId{}, 제목={}", SecurityUtils.getCurrentUserId(), requestDto.getTitle());
+  public ResponseEntity<PostResponse> createPost(@RequestBody @Valid PostCreateRequest request) {
+    log.info("게시글 등록 요청: boardType={},userId{}, 제목={}", request.getBoardType(),SecurityUtils.getCurrentUserId(), request.getTitle());
 
-    PostResponse createdPost = postService.createdPost(requestDto);
+    PostResponse createdPost = postService.createdPost(request);
     return ResponseEntity.ok(createdPost);
   }
 

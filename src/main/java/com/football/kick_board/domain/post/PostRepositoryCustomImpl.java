@@ -27,10 +27,10 @@ public class PostRepositoryCustomImpl extends QuerydslRepositorySupport implemen
   }
 
   @Override
-  public Page<Post> searchPosts(String keyword, Boolean activeStatus, Pageable pageable) {
+  public Page<Post> searchPosts(String keyword, Boolean activeStatus, BoardType boardType ,Pageable pageable) {
     QPost post = QPost.post;
     //동작 쿼리 조건 생성
-    Predicate[] predicates = createSearchPredicates(keyword, activeStatus, post);
+    Predicate[] predicates = createSearchPredicates(keyword, activeStatus, boardType ,post);
     //쿼리 실행
     List<Post> content = queryFactory
         .selectFrom(post) // Post 엔티티를 선택
@@ -54,7 +54,7 @@ public class PostRepositoryCustomImpl extends QuerydslRepositorySupport implemen
   }
 
 
-  private Predicate[] createSearchPredicates(String keyword, Boolean activeStatus, QPost post) {
+  private Predicate[] createSearchPredicates(String keyword, Boolean activeStatus, BoardType boardType ,QPost post) {
     List<BooleanExpression> conditions = new ArrayList<>();
 
     //활성 상태 조건: activeStatus가 null이 아니면 해당 상태만 조회,null인 경우 active=true인 게시글만 검색
@@ -64,11 +64,17 @@ public class PostRepositoryCustomImpl extends QuerydslRepositorySupport implemen
       conditions.add(post.active.isTrue());// 기본적으로 활성 게시글만
     }
 
+    if (boardType != null) {
+      conditions.add(post.boardType.eq(boardType));
+    }
+
     //검색 키워드 조건: keyword가 비어있지 않으면 제목 또는 내용에서 검색
     if (keyword != null && !keyword.isEmpty()) {
       conditions.add(post.title.containsIgnoreCase(keyword)
           .or(post.content.containsIgnoreCase(keyword)));
     }
+
+
 
     //조건 리스트를 predicate 배열로 반환
     return conditions.toArray(new Predicate[0]);

@@ -6,6 +6,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.criteria.CriteriaBuilder.In;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +49,9 @@ public class Post {
   @JoinColumn(name = "member_id", nullable = false)
   private Member author;
 
+  @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Comment> comments = new ArrayList<>();
+
   @CreatedDate
   @Column(updatable = false)
   private LocalDateTime createdAt;
@@ -62,19 +68,45 @@ public class Post {
 
   private LocalDateTime deletedAt;
 
-  @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Comment> comments = new ArrayList<>();
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private BoardType boardType = BoardType.GENERAL;//기본값 일반 게시판
+
+  //용병 모집 게시판 전용 추가 필드
+  private String location;
+  private LocalDateTime matchTime;
+  private String position;
+  private Integer neededPersonnel;
+
 
   @Builder
-  public Post(String title, String content, Member author) {
+  public Post(String title, String content, Member author, BoardType boardType,
+      String location, LocalDateTime matchTime, String position, Integer neededPersonnel) {
     this.title = title;
     this.content = content;
     this.author = author;
+    this.boardType = boardType != null ? boardType : BoardType.GENERAL;
+    this.location = location;
+    this.matchTime = matchTime;
+    this.position = position;
+    this.neededPersonnel = neededPersonnel;
   }
 
   public void update(String title, String content) {
     this.title = title;
     this.content = content;
+  }
+
+  // 용병 게시글 추가 정보 수정 메서드 (필요시)
+  public void updateMercenaryPost(String title, String content, String location,
+      LocalDateTime matchTime,
+      String position, Integer neededPersonnel) {
+    this.title = title;
+    this.content = content;
+    this.location = location;
+    this.matchTime = matchTime;
+    this.position = position;
+    this.neededPersonnel = neededPersonnel;
   }
 
   public void deactivate() {
@@ -86,13 +118,5 @@ public class Post {
     this.viewCount++;
   }
 
-  // 댓글 관련 편의 메서드
-  public void addComment(Comment comment) {
-    this.comments.add(comment);
-    // 양방향 관계 설정 (Comment에 Post 설정)
-    if (comment.getPost() != this) {
-      comment.setPost(this);
-    }
-
-  }
 }
+
