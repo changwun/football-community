@@ -22,15 +22,18 @@ public class MemberListResponse {
   private LocalDateTime lastLoginAt;
   private boolean active;// 활성/비활성 상태
 
-  //Member 엔티티를 인자로 받는 생성자
-  public MemberListResponse(Member member){
-    this.id = member.getId();
-    this.userId = member.getUserId();
-    this.email = member.getEmail();
-    this.nickname = member.getNickname();
-    this.role = member.getRole();
-    this.createdAt = member.getCreatedAt();
-    this.lastLoginAt = member.getLastLoginAt();
-    this.active = member.isActive();
+  // 코드 가독성을 위한 MemberListResponse 클래스에 정적 팩토리 메소드 추가
+  public static MemberListResponse from(Member member) {
+    return new MemberListResponse(
+        member.getId(),
+        member.getUserId(),
+        member.getEmail(),
+        member.getNickname(),
+        member.getRole(),
+        member.getCreatedAt(),
+        member.getLastLoginAt(),
+        member.isActive()
+    );
   }
+
 }

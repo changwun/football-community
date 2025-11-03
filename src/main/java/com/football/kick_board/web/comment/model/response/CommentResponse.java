@@ -1,4 +1,4 @@
-package com.football.kick_board.web.comment.model;
+package com.football.kick_board.web.comment.model.response;
 
 import com.football.kick_board.application.like.LikeService;
 import com.football.kick_board.domain.comment.Comment;

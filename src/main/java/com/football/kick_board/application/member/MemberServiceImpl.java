@@ -37,7 +37,7 @@ public class MemberServiceImpl implements MemberService {
 
   //회원 리스트 검색(관리자 기능)
   @Override
-  public Page<MemberListResponse> getMemberListForAdmin(MemberListRequest requestDto) {
+  public Page<Member> getMemberListForAdmin(MemberListRequest requestDto) {
     Pageable pageable = requestDto.toPageable();
 
     Page<Member> memberPage = memberRepository.searchMembers(
@@ -45,8 +45,7 @@ public class MemberServiceImpl implements MemberService {
         requestDto.getSearchKeyword(), // String
         pageable
     );
-
-    return memberPage.map(MemberListResponse::new);
+    return memberPage;
   }
 
   //회원 탈퇴 서비스 구현
@@ -89,38 +88,31 @@ public class MemberServiceImpl implements MemberService {
   //본인 정보 조회(UserId 기준)
   @Override
   @Transactional(readOnly = true)
-  public MemberResponse getMemberInfo() {
-    String currenUserId = SecurityUtils.getCurrentUserId();
-    Member member = memberRepository.findByUserId(currenUserId)
+  public Member getMemberInfo() {
+    String currentUserId = SecurityUtils.getCurrentUserId();
+    return memberRepository.findByUserId(currentUserId)
         .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
-
-    return MemberResponse.fromEntity(member);
 
   }
 
   //관리자용 : PK로 조회(권한 체크 포함)
   @Override
   @Transactional(readOnly = true)
-  public MemberResponse getMemberInfoByIdForAdmin(Long id) {
+  public Member getMemberInfoByIdForAdmin(Long id) {
     //대상 회원 조회
-    Member target = memberRepository.findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("대상 화원을 찾을 수 없습니다."));
-    return MemberResponse.fromEntity(target);
+    return memberRepository.findById(id)
+        .orElseThrow(() -> new IllegalArgumentException("관리자 권한으로 사용자(ID: " + id + ")를 찾을 수 없습니다."));
   }
 
   //관리자용: userId로 조회
   @Override
   @Transactional(readOnly = true)
-  public MemberResponse getMemberInfoByUserIdForAdmin(String userId) {
+  public Member getMemberInfoByUserIdForAdmin(String userId) {
 
-    Member target = memberRepository.findByUserId(userId)
-        .orElseThrow(() -> new IllegalArgumentException("대상 회원을 찾을 수 없습니다."));
-    return MemberResponse.fromEntity(target);
+    return memberRepository.findByUserId(userId)
+        .orElseThrow(() -> new IllegalArgumentException("관리자 권한으로 사용자(ID: " + userId + ")를 찾을 수 없습니다."));
+
   }
-
-
-
-
 
 
   @Override
@@ -158,6 +150,7 @@ public class MemberServiceImpl implements MemberService {
 
   //회원가입 내용
   @Override
+  @Transactional
   public void signup(MemberSignupRequest requestDto) {
     //중복검사
     if (memberRepository.existsByUserId(requestDto.getUserId()))  {

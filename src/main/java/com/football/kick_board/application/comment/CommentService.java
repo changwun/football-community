@@ -1,8 +1,8 @@
 package com.football.kick_board.application.comment;
 
-import com.football.kick_board.web.comment.model.CommentCreateRequest;
-import com.football.kick_board.web.comment.model.CommentResponse;
-import com.football.kick_board.web.comment.model.CommentUpdateRequest;
+import com.football.kick_board.web.comment.model.request.CommentCreateRequest;
+import com.football.kick_board.web.comment.model.response.CommentResponse;
+import com.football.kick_board.web.comment.model.request.CommentUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable; // 페이징을 위한 Pageable 임포트
 
