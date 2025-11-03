@@ -2,6 +2,7 @@ package com.football.kick_board.web.member;
 
 import com.football.kick_board.application.member.MemberService;
 import com.football.kick_board.common.security.SecurityUtils;
+import com.football.kick_board.domain.member.Member;
 import com.football.kick_board.web.member.model.request.MemberListRequest;
 import com.football.kick_board.web.member.model.response.MemberListResponse;
 import com.football.kick_board.web.member.model.request.MemberLoginRequest;
@@ -16,12 +17,9 @@ import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -46,10 +44,12 @@ public class MemberController {
   @GetMapping("/admin")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Page<MemberListResponse>> getMemberListAdmin(
-      @ModelAttribute MemberListRequest requestDto){
-    log.info("관리자 회원 목록 조회 요청 접수: {}",requestDto);
-    Page<MemberListResponse> memberList = memberService.getMemberListForAdmin(requestDto);
-    return ResponseEntity.ok(memberList);
+      @ModelAttribute MemberListRequest requestDto) {
+    Page<Member> memberPage = memberService.getMemberListForAdmin(requestDto);
+    log.info("관리자 회원 목록 조회 요청 접수: {}", requestDto);
+
+    Page<MemberListResponse> responsePage = memberPage.map(MemberListResponse::from);
+    return ResponseEntity.ok(responsePage);
   }
 
   //회원 탈퇴
@@ -63,7 +63,6 @@ public class MemberController {
     memberService.withdrawMember(requestDto);
     return ResponseEntity.ok().body(Map.of("success", true, "message", "회원 탈퇴가 성공적으로 처리되었습니다."));
   }
-
 
 
   //비밀번호 변경
@@ -82,25 +81,30 @@ public class MemberController {
   @GetMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<MemberResponse> getMemberByIdForAdmin(@PathVariable Long id) {
+    Member member = memberService.getMemberInfoByIdForAdmin(id);
     log.info("관리자 회원 상세 조회 요청: id={}", id);
-    MemberResponse dto = memberService.getMemberInfoByIdForAdmin(id);
-    return ResponseEntity.ok(dto);
+
+    MemberResponse response = MemberResponse.fromMember(member);
+    return ResponseEntity.ok(response);
   }
 
   //관리자용: userId로 회원 조회
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<MemberResponse> getMemberByUserIdForAdmin(@RequestParam String userId) {
+    Member member = memberService.getMemberInfoByUserIdForAdmin(userId);
     log.info("관리자 회원 상세 조회 요청: userId{}", userId);
-    MemberResponse dto = memberService.getMemberInfoByUserIdForAdmin(userId);
-    return ResponseEntity.ok(dto);
+    MemberResponse response = MemberResponse.fromMember(member);
+    return ResponseEntity.ok(response);
   }
 
   //토큰 아이디 추출 테스트용 getMapping
   @GetMapping("/me")
   public ResponseEntity<MemberResponse> getMyInfo() {
+    Member member = memberService.getMemberInfo();
     log.info("현재 로그인한 사용자: {}", SecurityUtils.getCurrentUserId());
-    MemberResponse memberInfo = memberService.getMemberInfo();
+
+    MemberResponse memberInfo = MemberResponse.fromMember(member);
     return ResponseEntity.ok(memberInfo);
   }
 
@@ -116,7 +120,7 @@ public class MemberController {
   public ResponseEntity<MemberLoginResponse> login(
       @Valid @RequestBody MemberLoginRequest requestDto, HttpServletRequest request) {
     log.info("로그인 요청 수신: userId={}", requestDto.getUserId());
-    MemberLoginResponse response = memberService.login(requestDto,request);
+    MemberLoginResponse response = memberService.login(requestDto, request);
     return ResponseEntity.ok(response);
   }
 }

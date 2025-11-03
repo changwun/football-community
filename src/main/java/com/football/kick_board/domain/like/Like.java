@@ -25,7 +25,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "likes")
+@Table(name = "user_likes")
 public class Like {
 
   @Id
@@ -48,15 +48,27 @@ public class Like {
   @Column(updatable = false)
   private LocalDateTime createdAt;
 
-  @Builder
-  public Like(Member member, Post post, Comment comment) {
-    this.member = member;
-    this.post = post;
-    this.comment = comment;
-
-    if (post == null && comment == null) {
-      throw new IllegalArgumentException("좋아요 대상(게시글 또는 댓글)은 반드시 하나 이상 지정되어야 합니다.");
+  // 게시글에 대한 좋아요 생성
+  public static Like ofPost(Member member, Post post) {
+    if (post == null) {
+      throw new IllegalArgumentException("Post는 null일 수 없습니다.");
     }
+    Like like = new Like();
+    like.member = member;
+    like.post = post;
+    return like;
   }
 
+  // 댓글에 대한 좋아요 생성
+  public static Like ofComment(Member member, Comment comment) {
+    if (comment == null) {
+      throw new IllegalArgumentException("Comment는 null일 수 없습니다.");
+    }
+    Like like = new Like();
+    like.member = member;
+    like.comment = comment;
+    return like;
+  }
 }
+
+

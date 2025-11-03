@@ -1,5 +1,6 @@
 package com.football.kick_board.web.member.model.response;
 
+
 import com.football.kick_board.domain.member.Member;
 import com.football.kick_board.domain.member.Role;
 import lombok.AllArgsConstructor;
@@ -18,15 +19,16 @@ public class MemberResponse {
 
 
   //중복되어 사용하는 정보 toDto 처리
-  public static MemberResponse fromEntity(Member m) {
+  public static MemberResponse fromMember(Member member) {
     return new MemberResponse(
-        m.getId(),
-        m.getUserId(),
-        m.getNickname(),
-        m.getEmail(),
-        m.getFavoriteTeam(),
-        m.getRole()
-
+        member.getId(),
+        member.getUserId(),
+        member.getNickname(),
+        member.getEmail(),
+        member.getFavoriteTeam(),
+        member.getRole() != null ? member.getRole() : Role.USER
     );
+
+
   }
 }

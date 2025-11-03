@@ -1,5 +1,7 @@
 package com.football.kick_board.common.config;
 
+import com.football.kick_board.common.security.JwtAccessDeniedHandler;
+import com.football.kick_board.common.security.JwtAuthenticationEntryPoint;
 import com.football.kick_board.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +24,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -36,8 +40,13 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))//세션 미사용
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/members/signup", "/members/login").permitAll()// 회원가입 경로 허용
+            .requestMatchers("/members/signup", "/members/login", "/api/matches/**")
+            .permitAll()// 회원가입 경로 허용
             .anyRequest().authenticated())// 그 외 모든 요청은 인증 필요
+        .exceptionHandling(exceptionHandling -> exceptionHandling
+            .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 인증 실패 처리
+            .accessDeniedHandler(jwtAccessDeniedHandler)     // ✨ 인가(권한) 실패 처리 ✨
+        )
         // 기본 폼 로그인 비활성화 (자동 /login 리디렉션 방지)
         .formLogin(form -> form.disable())
         // 기본 HTTP Basic 인증 비활성화 (포스트맨 401 에러 방지)

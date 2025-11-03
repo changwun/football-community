@@ -77,12 +77,8 @@ public class LikeServiceImpl implements LikeService {
       userLiked = false;
     } else {
       // 좋아요를 누르지 않은 경우 -> 좋아요 추가
-      Like like = Like.builder()
-          .member(member)
-          .post(post)
-          .comment(null) // 게시글에 대한 좋아요이므로 comment는 null
-          .build();
-      likeRepository.save(like);
+      Like newLike = Like.ofPost(member, post);
+      likeRepository.save(newLike);
       userLiked = true;
     }
 
@@ -118,12 +114,8 @@ public class LikeServiceImpl implements LikeService {
       userLiked = false;
     } else {
       // 좋아요를 누르지 않은 경우 -> 좋아요 추가
-      Like like = Like.builder()
-          .member(member)
-          .comment(comment)
-          .post(null) // 댓글에 대한 좋아요이므로 post는 null
-          .build();
-      likeRepository.save(like);
+      Like newLike = Like.ofComment(member,comment);
+      likeRepository.save(newLike);
       userLiked = true;
     }
 
