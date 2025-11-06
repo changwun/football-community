@@ -65,21 +65,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
       return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
-    // 권한 없음 예외 처리 (403 Forbidden)삭제 ->AccessDeniedException 따로 관리
-// @ExceptionHandler(AccessDeniedException.class)
-// public ResponseEntity<ErrorResponse> handleAccessDeniedException(
-//     AccessDeniedException ex, HttpServletRequest request) {
-//
-//   log.warn("접근 권한 없음: {}", ex.getMessage());
-//
-//   ErrorResponse errorResponse = ErrorResponse.builder()
-//       .errorCode("ACCESS_DENIED")
-//       .message("접근 권한이 없습니다.")
-//       .path(request.getRequestURI())
-//       .build();
-//
-//   return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
-// }
+     //권한 없음 예외 처리 (403 Forbidden)삭제 ->AccessDeniedException 따로 관리
+ @ExceptionHandler(AccessDeniedException.class)
+ public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+     AccessDeniedException ex, HttpServletRequest request) {
+
+   log.warn("접근 권한 없음: {}", ex.getMessage());
+
+   ErrorResponse errorResponse = ErrorResponse.builder()
+       .errorCode("ACCESS_DENIED")
+       .message("접근 권한이 없습니다.")
+       .path(request.getRequestURI())
+       .build();
+
+   return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+ }
 
     // 인증 실패 예외 처리 (401 Unauthorized)
     @ExceptionHandler(AuthenticationException.class)
