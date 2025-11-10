@@ -22,13 +22,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
+@TestPropertySource(properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb",
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "spring.datasource.username=sa",
+    "spring.datasource.password=",
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
+})
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // 테스트 후 DB 롤백
 class MemberControllerTest {
 
   @Autowired
@@ -324,7 +333,7 @@ class MemberControllerTest {
                 .param("size", "10")
         )
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.totalElements").value(15)) // testUser, adminUser,DB에 13개
+        .andExpect(jsonPath("$.totalElements").value(2)) // testUser, adminUser
         .andExpect(jsonPath("$.content[0].userId").exists())
         .andDo(print());
   }
