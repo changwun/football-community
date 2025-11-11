@@ -136,10 +136,13 @@ public class LikeServiceImpl implements LikeService {
     }
 
     long likeCount = likeRepository.countByPostAndPostActiveTrue(post);
-    boolean userLiked = likeRepository.existsByMemberAndPost(
-        memberRepository.findByUserId(currentUserId).orElse(null), // 현재 사용자 찾기
-        post
-    );
+    boolean userLiked = false; // 기본값은 false (손님)
+    if (currentUserId != null) { //  로그인한 경우에만
+      Member member = memberRepository.findByUserId(currentUserId).orElse(null); //  DB에서 사용자를 찾고
+      if (member != null) {
+        userLiked = likeRepository.existsByMemberAndPost(member, post); //  좋아요 여부 확인
+      }
+    }
 
     return new LikeStatusResponse("POST", postId, likeCount, userLiked);
   }
@@ -157,10 +160,13 @@ public class LikeServiceImpl implements LikeService {
     }
 
     long likeCount = likeRepository.countByCommentAndCommentActiveTrue(comment);
-    boolean userLiked = likeRepository.existsByMemberAndComment(
-        memberRepository.findByUserId(currentUserId).orElse(null), // 현재 사용자 찾기
-        comment
-    );
+    boolean userLiked = false; // 기본값 false
+    if (currentUserId != null) { // 로그인한 경우에만
+      Member member = memberRepository.findByUserId(currentUserId).orElse(null);
+      if (member != null) {
+        userLiked = likeRepository.existsByMemberAndComment(member, comment); // 좋아요 여부 확인
+      }
+    }
 
     return new LikeStatusResponse("COMMENT", commentId, likeCount, userLiked);
   }
