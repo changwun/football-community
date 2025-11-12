@@ -6,6 +6,7 @@ import com.football.kick_board.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -40,8 +41,10 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))//세션 미사용
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/members/signup", "/members/login", "/api/matches/**")
-            .permitAll()// 회원가입 경로 허용
+            .requestMatchers("/members/signup", "/members/login", "/api/matches/**").permitAll()// 회원가입 경로 허용
+            .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/likes/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
             .anyRequest().authenticated())// 그 외 모든 요청은 인증 필요
         .exceptionHandling(exceptionHandling -> exceptionHandling
             .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 인증 실패 처리

@@ -14,7 +14,7 @@ public class SecurityUtils {
   public static String getCurrentUserId() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null || "anonymousUser".equals(authentication.getName())) {
-      throw new IllegalArgumentException("인증된 사용자 정보를 찾을 수 없습니다.");
+      return null; // 예외를 던지는 대신 null을 반환하여 서비스 로직에서 비로그인 상태를 처리하도록 함
     }
     return authentication.getName();
   }
