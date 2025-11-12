@@ -65,6 +65,20 @@ public class MatchUpdateScheduler {
       log.error("[Scheduler] 경기 일정 업데이트 중 오류 발생", e);
     }
   }
+  //매일 새벽 5시: 오래된 경기 일정 DB에서 삭제
+  @Scheduled(cron = "0 0 5 * * ?") // 매일 새벽 5시
+  @Transactional
+  public void pruneOldMatchesBatch() {
+    log.info("[Scheduler] 오래된 경기 일정 삭제 작업을 시작합니다.");
+    try {
+      // (예: 오늘 기준으로 7일 이전에 시작한 경기는 삭제)
+      LocalDateTime cutoffDate = LocalDate.now().minusDays(7).atStartOfDay();
+      soccerMatchRepository.deleteAllByMatchDateBefore(cutoffDate);
+      log.info("[Scheduler] {} 이전의 오래된 경기 일정이 삭제되었습니다.", cutoffDate);
+    } catch (Exception e) {
+      log.error("[Scheduler] 오래된 경기 일정 삭제 중 오류 발생", e);
+    }
+  }
 
   // 5. API 응답(MatchesResponse.Match)을 SoccerMatch(Entity)로 변환하는 헬퍼 메서드
   private SoccerMatch apiToEntity(MatchesResponse.Match apiMatch) {
