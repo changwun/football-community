@@ -77,12 +77,8 @@ public class LikeServiceImpl implements LikeService {
       userLiked = false;
     } else {
       // 좋아요를 누르지 않은 경우 -> 좋아요 추가
-      Like like = Like.builder()
-          .member(member)
-          .post(post)
-          .comment(null) // 게시글에 대한 좋아요이므로 comment는 null
-          .build();
-      likeRepository.save(like);
+      Like newLike = Like.ofPost(member, post);
+      likeRepository.save(newLike);
       userLiked = true;
     }
 
@@ -118,12 +114,8 @@ public class LikeServiceImpl implements LikeService {
       userLiked = false;
     } else {
       // 좋아요를 누르지 않은 경우 -> 좋아요 추가
-      Like like = Like.builder()
-          .member(member)
-          .comment(comment)
-          .post(null) // 댓글에 대한 좋아요이므로 post는 null
-          .build();
-      likeRepository.save(like);
+      Like newLike = Like.ofComment(member,comment);
+      likeRepository.save(newLike);
       userLiked = true;
     }
 
@@ -144,10 +136,13 @@ public class LikeServiceImpl implements LikeService {
     }
 
     long likeCount = likeRepository.countByPostAndPostActiveTrue(post);
-    boolean userLiked = likeRepository.existsByMemberAndPost(
-        memberRepository.findByUserId(currentUserId).orElse(null), // 현재 사용자 찾기
-        post
-    );
+    boolean userLiked = false; // 기본값은 false (손님)
+    if (currentUserId != null) { //  로그인한 경우에만
+      Member member = memberRepository.findByUserId(currentUserId).orElse(null); //  DB에서 사용자를 찾고
+      if (member != null) {
+        userLiked = likeRepository.existsByMemberAndPost(member, post); //  좋아요 여부 확인
+      }
+    }
 
     return new LikeStatusResponse("POST", postId, likeCount, userLiked);
   }
@@ -165,10 +160,13 @@ public class LikeServiceImpl implements LikeService {
     }
 
     long likeCount = likeRepository.countByCommentAndCommentActiveTrue(comment);
-    boolean userLiked = likeRepository.existsByMemberAndComment(
-        memberRepository.findByUserId(currentUserId).orElse(null), // 현재 사용자 찾기
-        comment
-    );
+    boolean userLiked = false; // 기본값 false
+    if (currentUserId != null) { // 로그인한 경우에만
+      Member member = memberRepository.findByUserId(currentUserId).orElse(null);
+      if (member != null) {
+        userLiked = likeRepository.existsByMemberAndComment(member, comment); // 좋아요 여부 확인
+      }
+    }
 
     return new LikeStatusResponse("COMMENT", commentId, likeCount, userLiked);
   }

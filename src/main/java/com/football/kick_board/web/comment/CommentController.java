@@ -1,10 +1,9 @@
 package com.football.kick_board.web.comment;
 
 import com.football.kick_board.application.comment.CommentService;
-import com.football.kick_board.application.like.LikeService;
-import com.football.kick_board.web.comment.model.CommentCreateRequest;
-import com.football.kick_board.web.comment.model.CommentResponse;
-import com.football.kick_board.web.comment.model.CommentUpdateRequest;
+import com.football.kick_board.web.comment.model.request.CommentCreateRequest;
+import com.football.kick_board.web.comment.model.response.CommentResponse;
+import com.football.kick_board.web.comment.model.request.CommentUpdateRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

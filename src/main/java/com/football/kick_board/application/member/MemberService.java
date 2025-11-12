@@ -1,5 +1,6 @@
 package com.football.kick_board.application.member;
 
+import com.football.kick_board.domain.member.Member;
 import com.football.kick_board.web.member.model.request.MemberListRequest;
 import com.football.kick_board.web.member.model.response.MemberListResponse;
 import com.football.kick_board.web.member.model.request.MemberLoginRequest;
@@ -19,13 +20,13 @@ public interface MemberService {
 
   MemberLoginResponse login(MemberLoginRequest requestDto, HttpServletRequest request);
 
-  MemberResponse getMemberInfo();
+  Member getMemberInfo();
 
-  MemberResponse getMemberInfoByIdForAdmin(Long id);//관리자 전용 id조회
+  Member getMemberInfoByIdForAdmin(Long id);//관리자 전용 id조회
 
-  MemberResponse getMemberInfoByUserIdForAdmin(String userId);//관리자 전용 유저id 조회
+  Member getMemberInfoByUserIdForAdmin(String userId);//관리자 전용 유저id 조회
 
-  Page<MemberListResponse> getMemberListForAdmin(MemberListRequest requestDto);
+  Page<Member> getMemberListForAdmin(MemberListRequest requestDto);
 
   // 반환값이 없으므로 void 통한 메서드 처리.
   void changePassword(PasswordChangeRequest requestDto);
