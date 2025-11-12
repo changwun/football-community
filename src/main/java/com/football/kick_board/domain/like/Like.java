@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,7 +26,18 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "user_likes")
+@Table(name = "user_likes", uniqueConstraints = {
+    // 1. "유저" + "게시글" 조합은 유니크해야 한다.
+    @UniqueConstraint(
+        name = "uk_member_post",
+        columnNames = {"member_id", "post_id"}
+    ),
+    // 2. "유저" + "댓글" 조합은 유니크해야 한다.
+    @UniqueConstraint(
+        name = "uk_member_comment",
+        columnNames = {"member_id", "comment_id"}
+    )
+})
 public class Like {
 
   @Id
