@@ -10,6 +10,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -65,21 +66,37 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
       return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
-     //권한 없음 예외 처리 (403 Forbidden)삭제 ->AccessDeniedException 따로 관리
- @ExceptionHandler(AccessDeniedException.class)
- public ResponseEntity<ErrorResponse> handleAccessDeniedException(
-     AccessDeniedException ex, HttpServletRequest request) {
+//     //권한 없음 예외 처리 (403 Forbidden)삭제 ->AccessDeniedException 따로 관리
+// @ExceptionHandler(AccessDeniedException.class)
+// public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+//     AccessDeniedException ex, HttpServletRequest request) {
+//
+//   log.warn("접근 권한 없음: {}", ex.getMessage());
+//
+//   ErrorResponse errorResponse = ErrorResponse.builder()
+//       .errorCode("ACCESS_DENIED")
+//       .message("접근 권한이 없습니다.")
+//       .path(request.getRequestURI())
+//       .build();
+//
+//   return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+// }
 
-   log.warn("접근 권한 없음: {}", ex.getMessage());
+    // (@PreAuthorize("hasRole('ADMIN')") 실패 시 500 에러를 막아줍니다)
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+        AuthorizationDeniedException ex, HttpServletRequest request) {
 
-   ErrorResponse errorResponse = ErrorResponse.builder()
-       .errorCode("ACCESS_DENIED")
-       .message("접근 권한이 없습니다.")
-       .path(request.getRequestURI())
-       .build();
+      log.warn("@PreAuthorize 권한 없음: {}", ex.getMessage());
 
-   return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
- }
+      ErrorResponse errorResponse = ErrorResponse.builder()
+          .errorCode("AUTHORIZATION_DENIED")
+          .message("해당 기능에 접근할 권한이 없습니다.")
+          .path(request.getRequestURI())
+          .build();
+
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
 
     // 인증 실패 예외 처리 (401 Unauthorized)
     @ExceptionHandler(AuthenticationException.class)
