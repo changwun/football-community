@@ -45,6 +45,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/likes/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
+            //Swagger 접속을 위한 URL들 추가
+            .requestMatchers(
+                "/swagger-ui.html",
+                "/swagger-ui/**",
+                "/v3/api-docs/**"
+            ).permitAll()
             .anyRequest().authenticated())// 그 외 모든 요청은 인증 필요
         .exceptionHandling(exceptionHandling -> exceptionHandling
             .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 인증 실패 처리
