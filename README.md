@@ -59,7 +59,8 @@
 - **API Test Tool**: Swagger UI, Postman
 
 ## ERD
-![img.png](img.png)
+<img width="1210" height="692" alt="최종 킥보드 ERD 복사본" src="https://github.com/user-attachments/assets/a6440a71-5e6a-4b98-be13-2b05acfdfb46" />
+
 
 
 
