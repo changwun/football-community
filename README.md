@@ -65,7 +65,7 @@
 
 
 ## Trouble Shooting
-### (1) [가장 중요] 테스트 환경 격리 실패 (MySQL DB 오염 문제)
+### (1) 테스트 환경 격리 실패 (MySQL DB 오염 문제)
 * **문제:** `@SpringBootTest` (통합 테스트) 실행 시, `src/main`의 **`MySQL`** 설정을 그대로 읽어와 테스트가 실패했습니다.
   1.  `@Transactional`을 사용해도, `@BeforeEach`와 `@Test`의 트랜잭션이 분리되어 `Post`에 `Comment`가 조회되지 않는(`comments[0]` 없음) 문제가 발생했습니다.
   2.  `@Transactional`을 제거하자, 롤백이 안 되어 `Duplicate entry 'testUser'` (중복 키) 에러가 모든 테스트에서 발생하며, **운영 DB가 테스트 데이터로 오염**되는 심각한 문제가 발생했습니다.
