@@ -25,14 +25,10 @@
 ### V2.0: 성능 고도화 (Completed)
 
 **1. 경기 일정 (Match) API: 다계층 캐시 아키텍처**
-* **문제점:** 외부 API(`FootballDataClient`)에 실시간으로 의존하여, API 장애 시 서비스가 중단되고 응답 속도가 느린 문제를 발견했습니다.
-* **L1 캐시 (DB):**
-    * **`@Scheduled` (스케줄링):** 매일 새벽 4시, `MatchUpdateScheduler`가 외부 API를 자동으로 호출하여 최신 경기 일정을 `soccer_match` DB 테이블에 **"미리 저장(적재)"**합니다.
-    * **DB Pruning:** 매일 새벽 5시, 7일이 지난 **오래된 경기 데이터를 자동으로 `DELETE`**하여, "DB 저장 비용" 문제를 해결했습니다.
-* **L2 캐시 (Redis):**
-    * **Cache-Aside 패턴:** `MatchService`는 `Redis`를 우선 조회합니다.
-    * **(Cache Hit)** `Redis`에 데이터가 있으면 DB 조회 없이 즉시 반환합니다. (빠른 속도)
-    * **(Cache Miss)** `Redis`에 데이터가 없으면 `soccer_match` DB(L1 캐시)를 조회하고, 그 결과를 `Redis`에 **1시간 TTL**로 저장한 뒤 반환합니다.
+* **문제점 (AS-IS):** V1.0의 `Match` API는 매번 외부 API(`FootballDataClient`)를 실시간으로 호출했습니다. **성능 테스트 결과(브라우저 개발자 도구 기준), 평균 응답 속도가 약 2,030ms (2.03초)로 측정되었습니다.**
+* **L1/L2 캐시 도입 (TO-BE):** V2.0에서는 `Redis`(L2)와 `DB`(L1)를 사용하는 2-Layer Caching을 도입하고 `Cache-Aside` 패턴을 적용했습니다.
+* **개선 결과 (Cache HIT):** **동일한 API**를 다시 호출했을 때, `Redis`에서 캐시를 조회하여 **평균 59ms** (0.059초)의 응답 속도를 확보했습니다.
+* **효과:** 약 **97%의 응답 속도 향상**을 달성하여, 사용자 경험과 서버 부하, API 비용 문제를 모두 개선했습니다.
 
 **[🗺️ 향후 로드맵 (Future Roadmap)]**
 * **스포츠 이슈 크롤링:** `Jsoup`을 활용하여 실시간 스포츠 뉴스를 크롤링하여 제공.
@@ -41,21 +37,20 @@
 
 
 ## 🔧 기술 스택
-**Backend**: Java 17
-- **Spring Boot 3.5.4**: Spring Web, Spring Data JPA, AOP
-- **Spring Security**: JWT (Access/Refresh Token) 기반 인증/인가
-- **QueryDSL 5.0**: `PostRepositoryCustom` 구현 (동적 검색 및 페이징)
-**데이터베이스**: MySQL (AWS RDS) | 운영 DB
-- **Redis** | **(L2 캐시)**: `Match` API 조회 성능 향상 (Cache-Aside)
-- **Cache**: Redis
-- **H2 Database**: 테스트 환경 격리 (DB 완전 분리)
-**Infra & DevOps**: AWS EC2, Nginx | (배포 예정) 리버스 프록시 및 무중단 배포
-- **@Scheduled**: 매일 새벽 `Match` API 호출 및 DB 저장/삭제 (L1 캐시)
-**API & Docs**: REST API
-- **Springdoc (OpenAPI 3.0)**: springdoc-openapi-starter-webmvc-ui:2.5.0 사용 |
-`FootballDataClient` | `RestTemplate` 을 이용한 외부 API 연동
-**Test** 단위 테스트(JUnit 5 & Mockito), 통합 테스트(@SpringBootTest)
-- **빌드 툴**: Gradle
+| 구분 | 기술 | 상세 내용 |
+| :--- | :--- | :--- |
+| **Backend** | Java 17, Spring Boot 3.x | Spring Web, Spring Data JPA |
+| | Spring Security | JWT (Access/Refresh Token) 기반 인증/인가 |
+| | **QueryDSL 5.0** | 동적 쿼리 및 페이징 구현 (`PostRepositoryCustom`) |
+| **Database** | MySQL | 운영 DB (AWS RDS 배포 예정) |
+| | **H2 Database** | **테스트 환경 격리** (`@TestPropertySource`) |
+| **Cache & Batch** | **Redis** | **(L2 캐시)** `Match` API 응답 속도 97% 향상 (Cache-Aside) |
+| | **`@Scheduled`** | **(L1 캐시)** 매일 새벽 `Match` API 호출 및 DB 적재/삭제 |
+| **Test** | **JUnit 5, Mockito** | **(단위 테스트)** `Service` 로직 격리 및 검증 |
+| | **`@SpringBootTest`** | **(통합 테스트)** `Controller` - `Service` - `DB` E2E 흐름 검증 |
+| **API & Docs** | REST API, **Springdoc (OpenAPI 3.0)** | `springdoc-openapi-starter-webmvc-ui:2.5.0` |
+| | `FootballDataClient` | `RestTemplate` (또는 `WebClient`)을 이용한 외부 API 연동 |
+| **Build** | Gradle | |
 
 ## ⚙️ 개발 환경 (Development Environment)
 - **IDE**: IntelliJ IDEA
