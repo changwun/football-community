@@ -5,65 +5,85 @@
 축구 팬들이 자유롭게 소통하고 정보를 공유하며, 용병 경기를 모집할 수 있는 커뮤니티 플랫폼입니다. 회원 가입 및 로그인, 게시판 기능, 관리자 페이지, 그리고 축구 경기 일정 등을 제공합니다.
 
 ## 📦 주요 기능
-**1.[회원가입 / 로그인]** : 핵심기능 Spring Security, JPA, 암호화 형식 bcrypt 진행, JWT토큰 발급.
-- 회원가입 기능 (관리자를 제외한 모든 사용자는 일반회원, 필수 인적 사항 기재, 활동은 닉네임을 통해 활동)
-- 로그인 기능(로그인 시 회원가입 때 사용한 아이디 패스워드 일치해야 함)
-- 회원정보 조회 : 회원 PK로 조회,로그인 ID(username)으로 조회
-- 회원 비밀번호 수정 : 기존 비밀번호 확인 후 새로운 비밀번호로 변경
-- 회원 탈퇴 : 본인 확인 후 회원 비활성 처리 또는 실제 삭제 (정책에 따라)
-기타 기능 : 회원 목록 조회 (관리자용), 로그인 히스토리 저장
+### V1.0: 핵심 커뮤니티 기능 (Completed)
+**1. 회원 (Member) & 인증/인가 (Auth)**
+* **Spring Security & JWT:** `JwtAuthenticationFilter`, `EntryPoint`, `Handler`를 커스텀하여 JWT(Access/Refresh Token) 기반의 인증/인가 시스템을 구축했습니다.
+* **보안:** `BCryptPasswordEncoder`를 사용해 비밀번호를 단방향 암호화하여 저장합니다.
+* **핵심 로직:** 회원가입, 로그인, 회원 탈퇴(`Soft Delete` - `active` 플래그 관리) 기능을 구현했습니다.
+* **권한 관리:** `@PreAuthorize` 및 `Role(ADMIN, USER)`을 통해 관리자 API와 사용자 API의 접근 권한을 명확히 분리했습니다.
 
-**2.[게시판 / 게시글]** : 핵심기능 JPA, 파일 업로드, REST API
-- 게시글 작성 기능(로그인한 회원만 작성 가능(시간 가능 시 구현), 게시글 제목은 텍스트, 내용은 텍스트 + 이미지 가능)
-- 게시판에 게시글목록 조회 기능 & 선택 게시글 조회(회원+비회원도 조회 가능, 날짜순으로 목록조회, 선택 게시글 조회 시 작성자의 닉네임 및 작성일, 게시글 내용 확인 가능, 회원들 조회에 따른 조회수 증가 표시, 회원들 간 게시글 좋아요 기능)
-- 댓글 작성 및 댓글목록 조회 기능(게시글 조회 시 댓글 목록도 함께 조회, 댓글 작성은 회원만 가능, 댓글 및 대 댓글 작성 시 작성자의 닉네임,작성일 등 조회, 관리자에 한해서 댓글 삭제도 가능, 회원들 간 댓글,대 댓글 좋아요 기능.)
+**2. 커뮤니티 (Post & Comment)**
+* **동적 쿼리 (QueryDSL):** `QueryDSL`과 `PostRepositoryCustom`을 구현하여, 게시판 타입(`GENERAL`/`MERCENARY`), 키워드(제목/내용)에 따른 **동적 검색 및 페이징** 기능을 구현했습니다.
+* **계층형 댓글:** `self-join`을 활용하여 '댓글'과 '대댓글'이 모두 가능한 계층형 구조를 구현했습니다.
+* **유효성 검증:** `@Valid`와 **Validation Groups** (`@GroupSequence`)를 활용하여, '일반 게시글'과 '용병 모집글'(`location`, `matchTime` 등)의 **DTO 유효성 검사 규칙을 동적으로 분리**하여 처리했습니다.
 
-**3.[용병 모집 게시판 / 게시글]** : 지역 구분,게시글 내용에 기본 문구 자동 삽입
-- 각 지역별 용병 구하기 페이지(형식은 게시판 형식과 동일.)
-지역별 작성 하는 곳 나누기
-- 게시판에 게시글목록 조회 기능 & 선택 게시글 조회(회원+비회원도 조회 가능, 원하는 지역 선택 후 게시판 조회, 게시판은 날짜순으로 목록조회, 선택 게시글 조회 시 작성자의 닉네임 및 작성일, 게시글 내용 확인 가능, 게시판에 목록에서 경기일정 및 포지션 등 필수 인원 확인가능, 회원들 간 게시글 좋아요 기능)
-- 게시글 작성 기능(“준비물, 장소, 시간, 필요인원 등 기재해주세요.” 라는 문구 자동 삽입 & 필수 입력 정보란 생성)
-- 댓글 작성 및 댓글 목록 조회 (게시글 조회 시 댓글 목록도 함께 조회, 댓글은 작성은 회원만 가능, 댓글 및 대 댓글 작성 시 작성자의 닉네임,작성일 등 조회, 관리자에 한해서 댓글 삭제도 가능, 회원들 간 댓글,대 댓글 좋아요 기능.)
+**3. 좋아요 (Like) & 동시성 제어**
+* 게시글과 댓글에 대한 '좋아요' 토글(Toggle) 기능을 구현했습니다.
+* **[동시성 제어]** '좋아요' 버튼 연타 시 발생하는 **Race Condition(경쟁 상태)** 문제를 해결하기 위해, `Like` 엔티티의 `@Table`에 **`@UniqueConstraint`** (복합 유니크 키: `member_id`, `post_id`)를 적용했습니다.
+    * (서비스 로직(1차 방어)이 뚫리더라도, **DB 레벨(2차 방어)**에서 `DataIntegrityViolationException`을 발생시켜 중복 저장을 원천 차단하고 데이터 무결성을 보장합니다.)
 
-**3.[관리자 페이지]** : 핵심기능 Spring Security Role 기반 인가, 관리자 UI 
-- 관리자 관리 페이지 기능(회원관리 목록, 회원 비활성 버튼(삭제), 로그인 히스토리 등)
+### V2.0: 성능 고도화 (Completed)
 
-**[그외 가능 시 추가 예정 기능들]**
-- 콘텐츠 조회 : 회원 비회원 별 권한 분리.
-- 축구 일정 공지 페이지 기능 : 관리자가 제공, 외부 API를 호출(비동기 스케줄링 @Scheduled 그 달 1일 00시마다 -> API호출 -> DB저장하여 날짜(월별) 출력, 예상 호출 사이트 : https://www.api-football.com/ 또는 다음 스포츠 축구 전체 일정)
-- 스포츠 이슈 : 외부 API를 통해 스포츠 뉴스 기사 확인 가능.(RSS or Jsoup)
-- 댓글 알림 서비스 : 회원 테그 기능을 통해 알림서비스 제공.
-- 경기 일정 캐시 처리 등등
+**1. 경기 일정 (Match) API: 다계층 캐시 아키텍처**
+* **문제점 (AS-IS):** V1.0의 `Match` API는 매번 외부 API(`FootballDataClient`)를 실시간으로 호출했습니다. **성능 테스트 결과(브라우저 개발자 도구 기준), 평균 응답 속도가 약 2,030ms (2.03초)로 측정되었습니다.**
+* **L1/L2 캐시 도입 (TO-BE):** V2.0에서는 `Redis`(L2)와 `DB`(L1)를 사용하는 2-Layer Caching을 도입하고 `Cache-Aside` 패턴을 적용했습니다.
+* **개선 결과 (Cache HIT):** **동일한 API**를 다시 호출했을 때, `Redis`에서 캐시를 조회하여 **평균 59ms** (0.059초)의 응답 속도를 확보했습니다.
+* **효과:** 약 **97%의 응답 속도 향상**을 달성하여, 사용자 경험과 서버 부하, API 비용 문제를 모두 개선했습니다.
+
+**[🗺️ 향후 로드맵 (Future Roadmap)]**
+* **스포츠 이슈 크롤링:** `Jsoup`을 활용하여 실시간 스포츠 뉴스를 크롤링하여 제공.
+* **실시간 알림:** `SSE (Server-Sent Events)`를 도입하여, 내 게시글/댓글에 '좋아요'나 '새 댓글'이 달릴 시 실시간 알림 기능 구현.
+* **소셜 로그인:** `OAuth2` (Google, Kakao)를 이용한 간편 로그인 기능 추가.
 
 
 ## 🔧 기술 스택
-Backend
-- **Language**: Java 17
-- **Framework**: Spring Boot 3.5.4
-- **Security**: Spring Security + JWT 
-- **JPA**: ORM(Object-Relational Mapping)
-데이터베이스
-- **DB**: MySQL
-- **Cache**: Redis
-API연동
-- **API Client**: RestTemplate / WebClient
-- **Scheduler**: @Scheduled
-(비동기 스케줄링)
-- **크롤링**: Jsoup (스포츠 뉴스 기사)
-- **문서화**: Swagger 3.0
-- **빌드 툴**: Gradle
+| 구분 | 기술 | 상세 내용 |
+| :--- | :--- | :--- |
+| **Backend** | Java 17, Spring Boot 3.x | Spring Web, Spring Data JPA |
+| | Spring Security | JWT (Access/Refresh Token) 기반 인증/인가 |
+| | **QueryDSL 5.0** | 동적 쿼리 및 페이징 구현 (`PostRepositoryCustom`) |
+| **Database** | MySQL | 운영 DB (AWS RDS 배포 예정) |
+| | **H2 Database** | **테스트 환경 격리** (`@TestPropertySource`) |
+| **Cache & Batch** | **Redis** | **(L2 캐시)** `Match` API 응답 속도 97% 향상 (Cache-Aside) |
+| | **`@Scheduled`** | **(L1 캐시)** 매일 새벽 `Match` API 호출 및 DB 적재/삭제 |
+| **Test** | **JUnit 5, Mockito** | **(단위 테스트)** `Service` 로직 격리 및 검증 |
+| | **`@SpringBootTest`** | **(통합 테스트)** `Controller` - `Service` - `DB` E2E 흐름 검증 |
+| **API & Docs** | REST API, **Springdoc (OpenAPI 3.0)** | `springdoc-openapi-starter-webmvc-ui:2.5.0` |
+| | `FootballDataClient` | `RestTemplate` (또는 `WebClient`)을 이용한 외부 API 연동 |
+| **Build** | Gradle | |
 
 ## ⚙️ 개발 환경 (Development Environment)
 - **IDE**: IntelliJ IDEA
 - **JDK**: OpenJDK 17
-- **Database Tool**: MySQL Workbench
-- **API Test Tool**: Postman
+- **Database Tool**: MySQL Workbench, H2 Console(테스트 DB)
+- **API Test Tool**: Swagger UI, Postman
 
 ## ERD
-<img width="1658" height="1132" alt="image" src="https://github.com/user-attachments/assets/5635bc10-987f-4c30-97d9-26b2e9e11d4c" />
+<img width="1210" height="692" alt="최종 킥보드 ERD 복사본" src="https://github.com/user-attachments/assets/a6440a71-5e6a-4b98-be13-2b05acfdfb46" />
 
 
 
 
 ## Trouble Shooting
-???
+### (1) 테스트 환경 격리 실패 (MySQL DB 오염 문제)
+* **문제:** `@SpringBootTest` (통합 테스트) 실행 시, `src/main`의 **`MySQL`** 설정을 그대로 읽어와 테스트가 실패했습니다.
+  1.  `@Transactional`을 사용해도, `@BeforeEach`와 `@Test`의 트랜잭션이 분리되어 `Post`에 `Comment`가 조회되지 않는(`comments[0]` 없음) 문제가 발생했습니다.
+  2.  `@Transactional`을 제거하자, 롤백이 안 되어 `Duplicate entry 'testUser'` (중복 키) 에러가 모든 테스트에서 발생하며, **운영 DB가 테스트 데이터로 오염**되는 심각한 문제가 발생했습니다.
+* **해결:**
+  1.  `src/test/resources`에 `application.properties`를 추가했으나, Gradle 빌드 캐시 문제로 `MySQL`이 계속 로드되었습니다.
+  2.  **`@TestPropertySource`** 어노테이션을 각 테스트 클래스에 직접 명시하여, 테스트 DB를 **`H2` 인메모리 DB**로 강제 주입했습니다.
+  3.  `spring.jpa.hibernate.ddl-auto=create-drop`을 적용하여, 매 테스트 실행 시 DB를 **완전히 초기화**함으로써 `Duplicate entry`와 `comments[0]` 문제를 **모두 해결**하고 테스트 환경을 완벽히 격리했습니다.
+
+### (2) [보안] `@PreAuthorize` 권한 테스트 시 500 에러 발생
+* **문제:** "ADMIN" 권한이 필요한 API(`/members/admin`)에 "USER"로 접근 시, `Expected: 403 (Forbidden)`이 아닌 `Actual: 500 (Internal Server Error)`이 발생.
+* **원인 분석:**
+  1.  `JwtAccessDeniedHandler` (403 담당)는 **"보안 필터"** 레벨의 `AccessDeniedException`을 처리합니다.
+  2.  하지만 `@PreAuthorize` (메서드 보안)는 `AuthorizationDeniedException`이라는 **"다른 종류"**의 예외를 발생시키며, 이 예외는 "컨트롤러" 영역으로 전달됩니다.
+  3.  `GlobalExceptionHandler`에 이 예외 핸들러가 없어, 최종 `@ExceptionHandler(Exception.class)`가 `500`을 반환했습니다.
+* **해결:** `GlobalExceptionHandler`에 `AuthorizationDeniedException`을 `403 Forbidden`과 `ErrorResponse` DTO로 처리하는 `@ExceptionHandler`를 명시적으로 **추가**하여, 2단계 보안 예외 처리 아키텍처를 완성했습니다.
+
+### (3) [동시성] '좋아요' 중복 저장 (Race Condition)
+* **문제:** `LikeService`의 `toggleLike` 로직(1. 읽기 `findBy...` &rarr; 2. 쓰기 `save/delete`)이 0.002초 이내의 동시 요청(스크립트 공격 등)에 뚫려, **데이터가 중복 저장**될 수 있는 Race Condition(경쟁 상태)을 발견했습니다.
+* **해결:**
+  * 1차 방어(Service 로직) 외에, **`Like.java`** 엔티티의 `@Table` 어노테이션에 **`@UniqueConstraint`**를 추가했습니다.
+  *
