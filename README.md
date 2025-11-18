@@ -7,7 +7,7 @@
 ## 📺 라이브 Swagger URL : (http://54.180.8.85/swagger-ui.html)
 
 ## 🏛️ 배포 아키텍처 (AWS)
-![img_1.png](아키텍쳐 이미지.png)
+<img width="409" height="209" alt="스크린샷 2025-11-18 오전 12 30 38" src="https://github.com/user-attachments/assets/a588b07f-f13c-494f-acd9-36b308559273" />
 
 ## 📦 주요 기능
 ### V1.0: 핵심 커뮤니티 기능 (Completed)
