@@ -4,6 +4,11 @@
 ## 📝 소개
 축구 팬들이 자유롭게 소통하고 정보를 공유하며, 용병 경기를 모집할 수 있는 커뮤니티 플랫폼입니다. 회원 가입 및 로그인, 게시판 기능, 관리자 페이지, 그리고 축구 경기 일정 등을 제공합니다.
 
+## 📺 라이브 Swagger URL : (http://54.180.8.85/swagger-ui.html)
+
+## 🏛️ 배포 아키텍처 (AWS)
+![img_1.png](아키텍쳐 이미지.png)
+
 ## 📦 주요 기능
 ### V1.0: 핵심 커뮤니티 기능 (Completed)
 **1. 회원 (Member) & 인증/인가 (Auth)**
@@ -37,20 +42,23 @@
 
 
 ## 🔧 기술 스택
-| 구분 | 기술 | 상세 내용 |
-| :--- | :--- | :--- |
-| **Backend** | Java 17, Spring Boot 3.x | Spring Web, Spring Data JPA |
-| | Spring Security | JWT (Access/Refresh Token) 기반 인증/인가 |
-| | **QueryDSL 5.0** | 동적 쿼리 및 페이징 구현 (`PostRepositoryCustom`) |
-| **Database** | MySQL | 운영 DB (AWS RDS 배포 예정) |
-| | **H2 Database** | **테스트 환경 격리** (`@TestPropertySource`) |
-| **Cache & Batch** | **Redis** | **(L2 캐시)** `Match` API 응답 속도 97% 향상 (Cache-Aside) |
-| | **`@Scheduled`** | **(L1 캐시)** 매일 새벽 `Match` API 호출 및 DB 적재/삭제 |
-| **Test** | **JUnit 5, Mockito** | **(단위 테스트)** `Service` 로직 격리 및 검증 |
-| | **`@SpringBootTest`** | **(통합 테스트)** `Controller` - `Service` - `DB` E2E 흐름 검증 |
-| **API & Docs** | REST API, **Springdoc (OpenAPI 3.0)** | `springdoc-openapi-starter-webmvc-ui:2.5.0` |
-| | `FootballDataClient` | `RestTemplate` (또는 `WebClient`)을 이용한 외부 API 연동 |
-| **Build** | Gradle | |
+| 구분 | 기술                                | 상세 내용 및 사용 이유                                                         |
+| :--- |:----------------------------------|:----------------------------------------------------------------------|
+| **Backend** | Java 17, Spring Boot 3.5.4        | Spring Web, Spring Data JPA, AOP                                      |
+| | Spring Security                   | JWT (Access/Refresh Token) 기반 인증/인가                                   |
+| | QueryDSL 5.0                      | 동적 쿼리 및 페이징 구현 (`PostRepositoryCustom`)                               |
+| **Database** | MySQL (AWS RDS)                   | 운영 데이터베이스 (t2.micro 프리 티어 활용)                                         |
+| | Redis (AWS ElastiCache)           | **(L2 캐시)** `Match` API 조회 성능 97% 향상 (Cache-Aside)                    |
+| | H2 Database                       | **(테스트)** 테스트 환경 격리 (`@TestPropertySource`)                           |
+| **Infra & DevOps** | AWS EC2 (Amazon Linux 2023)       | `t2.micro` 프리 티어를 사용한 애플리케이션 서버                                       |
+| | Nginx                             | 리버스 프록시(Reverse Proxy) 구성 (`80` &rarr; `8080` 포트 포워딩)                 |
+| | systemd                           | Spring Boot `jar` 파일을 서비스로 등록 (EC2 재부팅 시 자동 재시작 보장)                   |
+| | SELinux                           | Nginx가 Spring Boot(8080)와 통신할 수 있도록 `httpd_can_network_connect` 정책 수정 |
+| **Batch** | `@Scheduled`                      | 매일 새벽 `Match` API 호출 및 DB 적재/삭제 (L1 캐시)                               |
+| **API & Docs** | REST API, Springdoc (OpenAPI 3.0) | `springdoc-openapi...:2.5.0`을 통한 API 명세서 자동화                          |
+| **Test** | JUnit 5, Mockito                  | **(단위 테스트)** `Service` 로직 격리 및 검증                                     |
+| | @SpringBootTest                | **(통합 테스트)** `Controller` - `Service` - `DB` E2E 흐름 검증                |
+| **Build** | Gradle                            |                                                                       |
 
 ## ⚙️ 개발 환경 (Development Environment)
 - **IDE**: IntelliJ IDEA
@@ -66,24 +74,25 @@
 
 ## Trouble Shooting
 ### (1) 테스트 환경 격리 실패 (MySQL DB 오염 문제)
-* **문제:** `@SpringBootTest` (통합 테스트) 실행 시, `src/main`의 **`MySQL`** 설정을 그대로 읽어와 테스트가 실패했습니다.
+* **문제:** `@SpringBootTest` (통합 테스트) 실행 시, `src/main`의 `MySQL` 설정을 그대로 읽어와 테스트가 실패했습니다.
   1.  `@Transactional`을 사용해도, `@BeforeEach`와 `@Test`의 트랜잭션이 분리되어 `Post`에 `Comment`가 조회되지 않는(`comments[0]` 없음) 문제가 발생했습니다.
-  2.  `@Transactional`을 제거하자, 롤백이 안 되어 `Duplicate entry 'testUser'` (중복 키) 에러가 모든 테스트에서 발생하며, **운영 DB가 테스트 데이터로 오염**되는 심각한 문제가 발생했습니다.
+  2.  `@Transactional`을 제거하자, 롤백이 안 되어 `Duplicate entry 'testUser'` (중복 키) 에러가 모든 테스트에서 발생하며, 운영 DB가 테스트 데이터로 오염되는 심각한 문제가 발생했습니다.
 * **해결:**
   1.  `src/test/resources`에 `application.properties`를 추가했으나, Gradle 빌드 캐시 문제로 `MySQL`이 계속 로드되었습니다.
-  2.  **`@TestPropertySource`** 어노테이션을 각 테스트 클래스에 직접 명시하여, 테스트 DB를 **`H2` 인메모리 DB**로 강제 주입했습니다.
-  3.  `spring.jpa.hibernate.ddl-auto=create-drop`을 적용하여, 매 테스트 실행 시 DB를 **완전히 초기화**함으로써 `Duplicate entry`와 `comments[0]` 문제를 **모두 해결**하고 테스트 환경을 완벽히 격리했습니다.
+  2.  `@TestPropertySource` 어노테이션을 각 테스트 클래스에 직접 명시하여, 테스트 DB를 `H2` 인메모리 DB로 강제 주입했습니다.
+  3.  `spring.jpa.hibernate.ddl-auto=create-drop`을 적용하여, 매 테스트 실행 시 DB를 완전히 초기화함으로써 `Duplicate entry`와 `comments[0]` 문제를 모두 해결하고 테스트 환경을 완벽히 격리했습니다.
 
 ### (2) [보안] `@PreAuthorize` 권한 테스트 시 500 에러 발생
 * **문제:** "ADMIN" 권한이 필요한 API(`/members/admin`)에 "USER"로 접근 시, `Expected: 403 (Forbidden)`이 아닌 `Actual: 500 (Internal Server Error)`이 발생.
 * **원인 분석:**
-  1.  `JwtAccessDeniedHandler` (403 담당)는 **"보안 필터"** 레벨의 `AccessDeniedException`을 처리합니다.
+  1.  `JwtAccessDeniedHandler` (403 담당)는 "보안 필터" 레벨의 `AccessDeniedException`을 처리합니다.
   2.  하지만 `@PreAuthorize` (메서드 보안)는 `AuthorizationDeniedException`이라는 **"다른 종류"**의 예외를 발생시키며, 이 예외는 "컨트롤러" 영역으로 전달됩니다.
   3.  `GlobalExceptionHandler`에 이 예외 핸들러가 없어, 최종 `@ExceptionHandler(Exception.class)`가 `500`을 반환했습니다.
-* **해결:** `GlobalExceptionHandler`에 `AuthorizationDeniedException`을 `403 Forbidden`과 `ErrorResponse` DTO로 처리하는 `@ExceptionHandler`를 명시적으로 **추가**하여, 2단계 보안 예외 처리 아키텍처를 완성했습니다.
+* **해결:** `GlobalExceptionHandler`에 `AuthorizationDeniedException`을 `403 Forbidden`과 `ErrorResponse` DTO로 처리하는 `@ExceptionHandler`를 명시적으로 추가하여, 2단계 보안 예외 처리 아키텍처를 완성했습니다.
 
 ### (3) [동시성] '좋아요' 중복 저장 (Race Condition)
-* **문제:** `LikeService`의 `toggleLike` 로직(1. 읽기 `findBy...` &rarr; 2. 쓰기 `save/delete`)이 0.002초 이내의 동시 요청(스크립트 공격 등)에 뚫려, **데이터가 중복 저장**될 수 있는 Race Condition(경쟁 상태)을 발견했습니다.
+* **문제:** `LikeService`의 `toggleLike` 로직(1. 읽기 `findBy...` &rarr; 2. 쓰기 `save/delete`)이 0.002초 이내의 동시 요청(스크립트 공격 등)에 뚫려, 데이터가 중복 저장될 수 있는 Race Condition(경쟁 상태)을 발견했습니다.
 * **해결:**
-  * 1차 방어(Service 로직) 외에, **`Like.java`** 엔티티의 `@Table` 어노테이션에 **`@UniqueConstraint`**를 추가했습니다.
-  *
+  * 1차 방어(Service 로직) 외에, `Like.java` 엔티티의 `@Table` 어노테이션에 **`@UniqueConstraint`**를 추가했습니다.
+  * `(member_id, post_id)` 조합에 DB 레벨의 유니크 제약조건**을 걸어, 동시 요청으로 `DataIntegrityViolationException` 발생 시 `GlobalExceptionHandler`가 `400` 에러를 반환하도록 하여, 데이터 무결성을 원천적으로 보장했습니다.
+  
